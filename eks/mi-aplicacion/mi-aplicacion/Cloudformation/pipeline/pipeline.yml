@@ -1,0 +1,304 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "CloudFormation ImmsExchange Pipeline"
+
+Parameters:
+  PipelineConnectionArn:
+    Description: The connection arn linked with the repository
+    Type: String
+  RepositoryId:
+    Description: The repository that codepipeline will use to pull changes
+    Type: String
+  RepositoryBranch:
+    Description: The repository branch that codepipeline will use to pull changes
+    Type: String
+    AllowedValues:
+      - dev
+      - qa
+      - master
+    ConstraintDescription: must be a dev, qa, or master
+  EnvironmentType:
+    Description: The environment type
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - test
+      - prod
+    ConstraintDescription: must be a dev, test or prod
+  S3Bucket:
+    Description: S3 Bucket to store the artifacts generated during the pipeline
+    Type: String
+  ClusterName:
+    Type: String
+    Description: Nombre dinámico del cluster de EKS
+  RepositoryName:
+    Type: String
+    Description: Nombre dinámico del repositorio de ECR
+  CFRole:
+    Description: Cloudformation role with permissions to create the required resources
+    Type: String
+
+
+Resources:
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "codebuild.amazonaws.com"
+                - "s3.amazonaws.com"
+                - "kms.amazonaws.com"
+                - "eks.amazonaws.com"
+                - "ecr.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: /service-role/
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:*"
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - "secretsmanager:GetSecretValue"
+                Resource: "arn:aws:secretsmanager:*:*:secret:build/*"
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                  - "cloudformation:*"
+                  - "kms:*"
+                  - "ecr:*"
+                  - "eks:*"
+                  - "s3:*"
+                Resource:
+                  - "*"
+  CodePipeLineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "codepipeline.amazonaws.com"
+                - "codebuild.amazonaws.com"
+                - "codedeploy.amazonaws.com"
+                - "cloudformation.amazonaws.com"
+                - "s3.amazonaws.com"
+                - "kms.amazonaws.com"
+                - "eks.amazonaws.com"
+                - "ecr.amazonaws.com"
+                - "ec2.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: /
+      Policies:
+        - PolicyName: !Sub ${EnvironmentType}-miaplicacion-policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "codestar-connections:*"
+                  - "codebuild:*"
+                  - "s3:*"
+                  - "cloudformation:*"
+                  - "cloudwatch:*"
+                  - "iam:PassRole"
+                  - "ecr:*"
+                  - "eks:*"
+                  - "ec2:*"
+                Resource:
+                  - "*"
+  CodeDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CodeDeployRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codedeploy.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CodeDeployPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:Describe*
+                  - autoscaling:CompleteLifecycleAction
+                  - autoscaling:DeleteLifecycleHook
+                  - autoscaling:Describe*
+                  - autoscaling:RecordLifecycleActionHeartbeat
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                  - s3:GetBucketLocation
+                  - s3:GetObjectVersion
+                  - s3:GetObjectAcl
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - ecs:RegisterTaskDefinition
+                  - ecs:DeregisterTaskDefinition
+                  - ecs:UpdateService
+                  - ecs:DescribeServices
+                  - ecs:ListServices
+                  - ecs:CreateService
+                  - ecs:DeleteService
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:GetAuthorizationToken
+                  - ecr:GetRepositoryPolicy
+                  - ecr:DescribeRepositories
+                  - ecr:ListImages
+                  - ecr:DescribeImages
+                  - ecr:BatchGetImage
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - codedeploy:CreateDeployment
+                  - codedeploy:Get* 
+                  - codedeploy:RegisterApplicationRevision
+                  - codedeploy:BatchGet*
+                Resource: '*'
+
+  PipelineBucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+  
+  CodeBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${AWS::StackName}-CodeBuild
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      LogsConfig:
+        CloudWatchLogs:
+          GroupName: !Sub ${AWS::StackName}-CodeBuildLogGroup
+          Status: ENABLED
+          StreamName: !Sub ${AWS::StackName}-CodeBuildLogStream
+      Artifacts:
+        Type: CODEPIPELINE
+        Name: !Sub ${EnvironmentType}-miaplicacion-pipeline-artifacts
+        EncryptionDisabled: true
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: "MiAplicacion/cloudformation/api/buildspec.yml"
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: aws/codebuild/standard:5.0
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: false
+        EnvironmentVariables:
+          - Name: S3Bucket
+            Type: PLAINTEXT
+            Value: !Ref S3Bucket
+          - Name: ENVIRONMENT_TYPE
+            Type: PLAINTEXT
+            Value: !Ref EnvironmentType
+  
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: !Sub mi-aplicacion-pipeline-${EnvironmentType}
+      RoleArn: !GetAtt CodePipeLineRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineBucket
+      RestartExecutionOnUpdate: true
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: SourceAction
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeStarSourceConnection
+                Version: 1
+              Region: us-west-2
+              OutputArtifacts:
+                - Name: SourceArtifact
+              Configuration:
+                ConnectionArn: !Ref PipelineConnectionArn
+                FullRepositoryId: !Ref RepositoryId
+                BranchName: !Ref RepositoryBranch
+                OutputArtifactFormat: "CODE_ZIP"
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              InputArtifacts:
+                - Name: SourceArtifact
+              OutputArtifacts:
+                - Name: BuildArtifact
+              Configuration:
+                ProjectName: !Ref CodeBuild
+        - Name: Deploy
+          Actions:
+            - Name: UpdateStack
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CloudFormation
+              Configuration:
+                ActionMode: CHANGE_SET_REPLACE
+                Capabilities: CAPABILITY_IAM
+                RoleArn: !Ref CFRole
+                TemplatePath: BuildArtifact::packaged-template.yml
+                StackName: !Sub "mi-aplicacion-api-${ENVIRONMENT_TYPE}"
+                ChangeSetName: !Sub "mi-aplicacion-api-${ENVIRONMENT_TYPE}-changeset"
+                OutputFileName: api-stack-outputs.json
+                ParameterOverrides: !Sub |
+                  {
+                    "EnvironmentType" : "${EnvironmentType}",
+                    "S3Bucket" : "${S3Bucket}"
+                  }
+              RunOrder: 1
+              InputArtifacts:
+                - Name: BuildArtifact
+              OutputArtifacts:
+                - Name: DeployArtifact
+            - Name: DeployToEKS
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CodeDeployToEKS
+                Version: 1
+              InputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ClusterName: !Ref ClusterName
+                ServiceName: mi-aplicacion
+                ImageDefinitions:
+                - name: mi-aplicacion
+                  imageUri:
+                   Fn::Sub:
+                     - "${ECRRepositoryUri}:latest"
+                     - ECRRepositoryUri: !Ref RepositoryName
+                DeploymentConfig: CodeDeployDefault.ECSAllAtOnce
+                RoleArn: !GetAtt CodeDeployRole.Arn

@@ -1,0 +1,9 @@
+
+{
+    "region" : "us-east-1",
+    "profile" : "3pg",
+    "configuration" : "Release",
+    "image-tag"     : "mi-aplicacion:mi-aplicacion",
+    "docker-build-working-dir" : "",
+    "vstoolkit-deployment-mode" : "PushOnly"
+}

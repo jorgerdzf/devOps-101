@@ -1,0 +1,42 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "lambda:InvokeFunction",
+        "lambda:ListFunctions"
+      ],
+      "Resource": "*",
+      "Effect": "Allow"
+    },
+    {
+      "Action": [
+        "iam:PassRole"
+      ],
+      "Resource": "*",
+      "Effect": "Allow"
+    },
+    {
+      "Action": [
+        "cloudwatch:*",
+        "codebuild:*",
+        "codepipeline:*",
+        "codestar-connections:PassConnection",
+        "s3:*",
+        "sns:*",
+        "cloudformation:*",
+        "dynamodb:*",
+        "lambda:*",
+        "apigateway:*",
+        "sts:*",
+        "kms:*",
+        "iam:*",
+        "ssm:*",
+        "cloudfront:*",
+        "xray:*"
+      ],
+      "Resource": "*",
+      "Effect": "Allow"
+    }
+  ]
+}

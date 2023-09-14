@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mi-aplicacion
+  labels:
+    app: mi-aplicacion
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mi-aplicacion
+  template:
+    metadata:
+      labels:
+        app: mi-aplicacion
+    spec:
+      containers:
+      - name: mi-aplicacion
+        image: 356403663115.dkr.ecr.us-east-1.amazonaws.com/mi-aplicacion:mi-aplicacion
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 4500
+          protocol: TCP

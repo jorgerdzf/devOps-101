@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: "ImmsExchange Template Format"
+
+Parameters:
+  EnvironmentType:
+    Description: The environment type
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - test
+      - prod
+    ConstraintDescription: must be a dev, test or prod
+
+Resources:
+  # ECR reposi
+  MiAplicacionECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "miaplicacion-ecr-repo-${EnvironmentType}"
+  # VPC creation
+  MiAplicacionVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub "MiAplicacionVPC-${EnvironmentType}"
+  # First public subnet us-east-1a
+  MiAplicacionPublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MiAplicacionVPC
+      AvailabilityZone: us-east-1a
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub "MiAplicacionPublicSubnet1-${EnvironmentType}"
+  # Second public subnet us-east-1b
+  MiAplicacionPublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MiAplicacionVPC
+      AvailabilityZone: us-east-1b
+      CidrBlock: 10.0.2.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub "MiAplicacionPublicSubnet2-${EnvironmentType}"
+  # EKS security group
+  EKSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for EKS cluster
+      VpcId: !Ref MiAplicacionVPC
+  # EKS Cluster
+  MiAplicacionKSCluster:
+    Type: AWS::EKS::Cluster
+    Properties:
+      Name: !Sub "miaplicacion-cluster-${EnvironmentType}"
+      RoleArn: arn:aws:iam::123456789012:role/eksClusterRole
+      ResourcesVpcConfig:
+        SubnetIds:
+          - !Ref MiAplicacionPublicSubnet1
+          - !Ref MiAplicacionPublicSubnet2
+        SecurityGroupIds:
+          - !Ref EKSSecurityGroup
+      Version: "1.21" # Check versions
+
+Outputs:
+  RepositoryName:
+    Description: Name of the ECR Repo
+    Value: !Ref MiAplicacionECRRepository
+  ClusterName:
+    Description: Name of the EKS Cluster
+    Value: !Ref MiAplicacionKSCluster

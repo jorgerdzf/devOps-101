@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "dDKI3VXEkgZJ2iqbKHRXHpa4rxU/K/7H+AzLVqLzWRQ3pECwQj8X9mKpArUCWOekIHj/E4+0orwH/TZljH58hg==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\eduardo.rodriguez\\STC\\Development\\mi-aplicacion\\mi-aplicacion\\mi-aplicacion.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\eduardo.rodriguez\\.nuget\\packages\\microsoft.visualstudio.azure.containers.tools.targets\\1.18.1\\microsoft.visualstudio.azure.containers.tools.targets.1.18.1.nupkg.sha512"
+  ],
+  "logs": []
+}
