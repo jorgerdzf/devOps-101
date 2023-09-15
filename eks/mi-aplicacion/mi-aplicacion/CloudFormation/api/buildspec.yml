@@ -3,6 +3,8 @@ phases:
   install:
     runtime-versions:
       kubectl: latest  # Install the latest version of kubectl
+      docker: latest
+      dotnet: latest
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
@@ -20,10 +22,10 @@ phases:
     commands:
       - echo Pushing Docker image to Amazon ECR...
       - docker push ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/mi-aplicacion-repo-${ENVIRONMENT_TYPE}:latest
-      - echo Deploying image to Amazon EKS...
-      - kubectl apply -f eks/mi-aplicacion/mi-aplicacion/Kubernetes/${ENVIRONMENT_TYPE}/deployment.yaml
-      - echo Applying service to Amazon EKS...
-      - kubectl apply -f eks/mi-aplicacion/mi-aplicacion/Kubernetes/${ENVIRONMENT_TYPE}/service.yaml
+      # - echo Deploying image to Amazon EKS...
+      # - kubectl apply -f eks/mi-aplicacion/mi-aplicacion/Kubernetes/${ENVIRONMENT_TYPE}/deployment.yaml
+      # - echo Applying service to Amazon EKS...
+      # - kubectl apply -f eks/mi-aplicacion/mi-aplicacion/Kubernetes/${ENVIRONMENT_TYPE}/service.yaml
 artifacts:
   files:
     - packaged-template.yml
