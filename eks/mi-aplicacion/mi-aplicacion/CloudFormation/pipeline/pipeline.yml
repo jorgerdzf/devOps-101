@@ -196,7 +196,7 @@ Resources:
         EncryptionDisabled: true
       Source:
         Type: CODEPIPELINE
-        BuildSpec: "eks/mi-aplicacion/mi-aplicacion/cloudformation/api/buildspec.yml"
+        BuildSpec: "eks/mi-aplicacion/mi-aplicacion/CloudFormation/api/buildspec.yml"
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
@@ -236,7 +236,7 @@ Resources:
                 ConnectionArn: !Ref PipelineConnectionArn
                 FullRepositoryId: !Ref RepositoryId
                 BranchName: !Ref RepositoryBranch
-                OutputArtifactFormat: CODE_ZIP
+                OutputArtifactFormat: "CODE_ZIP"
         - Name: Deploy
           Actions:
             - Name: DeployToKubernetes
