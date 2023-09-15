@@ -8,7 +8,7 @@ phases:
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
-      - aws ecr get-login --no-include-email --region ${AWS::Region}
+      - aws ecr get-login --no-include-email --region us-east-2
   build:
     commands:
       - echo Showing folder structure
