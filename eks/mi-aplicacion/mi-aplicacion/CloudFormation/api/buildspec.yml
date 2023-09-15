@@ -2,7 +2,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      kubectl: latest  # Install the latest version of kubectl
+      # kubectl: latest  # Install the latest version of kubectl
       docker: latest
       dotnet: latest
   pre_build:
