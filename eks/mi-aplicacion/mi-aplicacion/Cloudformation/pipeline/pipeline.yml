@@ -15,11 +15,12 @@ Parameters:
       - dev
       - qa
       - master
+      - main
     ConstraintDescription: must be a dev, qa, or master
   EnvironmentType:
     Description: The environment type
     Type: String
-    Default: dev
+    Default: test
     AllowedValues:
       - dev
       - test
@@ -28,16 +29,9 @@ Parameters:
   S3Bucket:
     Description: S3 Bucket to store the artifacts generated during the pipeline
     Type: String
-  ClusterName:
-    Type: String
-    Description: Nombre dinámico del cluster de EKS
-  RepositoryName:
-    Type: String
-    Description: Nombre dinámico del repositorio de ECR
   CFRole:
     Description: Cloudformation role with permissions to create the required resources
     Type: String
-
 
 Resources:
   CodeBuildRole:
@@ -202,7 +196,7 @@ Resources:
         EncryptionDisabled: true
       Source:
         Type: CODEPIPELINE
-        BuildSpec: "MiAplicacion/cloudformation/api/buildspec.yml"
+        BuildSpec: "eks/mi-aplicacion/mi-aplicacion/cloudformation/api/buildspec.yml"
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
@@ -235,17 +229,17 @@ Resources:
                 Owner: AWS
                 Provider: CodeStarSourceConnection
                 Version: 1
-              Region: us-west-2
+              Region: us-east-2
               OutputArtifacts:
                 - Name: SourceArtifact
               Configuration:
                 ConnectionArn: !Ref PipelineConnectionArn
                 FullRepositoryId: !Ref RepositoryId
                 BranchName: !Ref RepositoryBranch
-                OutputArtifactFormat: "CODE_ZIP"
-        - Name: Build
+                OutputArtifactFormat: CODE_ZIP
+        - Name: Deploy
           Actions:
-            - Name: Build
+            - Name: DeployToKubernetes
               ActionTypeId:
                 Category: Build
                 Owner: AWS
@@ -257,48 +251,3 @@ Resources:
                 - Name: BuildArtifact
               Configuration:
                 ProjectName: !Ref CodeBuild
-        - Name: Deploy
-          Actions:
-            - Name: UpdateStack
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Version: 1
-                Provider: CloudFormation
-              Configuration:
-                ActionMode: CHANGE_SET_REPLACE
-                Capabilities: CAPABILITY_IAM
-                RoleArn: !Ref CFRole
-                TemplatePath: BuildArtifact::packaged-template.yml
-                StackName: !Sub "mi-aplicacion-api-${ENVIRONMENT_TYPE}"
-                ChangeSetName: !Sub "mi-aplicacion-api-${ENVIRONMENT_TYPE}-changeset"
-                OutputFileName: api-stack-outputs.json
-                ParameterOverrides: !Sub |
-                  {
-                    "EnvironmentType" : "${EnvironmentType}",
-                    "S3Bucket" : "${S3Bucket}"
-                  }
-              RunOrder: 1
-              InputArtifacts:
-                - Name: BuildArtifact
-              OutputArtifacts:
-                - Name: DeployArtifact
-            - Name: DeployToEKS
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Provider: CodeDeployToEKS
-                Version: 1
-              InputArtifacts:
-                - Name: BuildOutput
-              Configuration:
-                ClusterName: !Ref ClusterName
-                ServiceName: mi-aplicacion
-                ImageDefinitions:
-                - name: mi-aplicacion
-                  imageUri:
-                   Fn::Sub:
-                     - "${ECRRepositoryUri}:latest"
-                     - ECRRepositoryUri: !Ref RepositoryName
-                DeploymentConfig: CodeDeployDefault.ECSAllAtOnce
-                RoleArn: !GetAtt CodeDeployRole.Arn

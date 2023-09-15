@@ -14,11 +14,26 @@ Parameters:
     ConstraintDescription: must be a dev, test or prod
 
 Resources:
+  MiAplicacionEksClusterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "mi-aplicacion-eks-role-${EnvironmentType}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: eks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+        - arn:aws:iam::aws:policy/AmazonEKSServicePolicy
+
   # ECR reposi
   MiAplicacionECRRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Sub "miaplicacion-ecr-repo-${EnvironmentType}"
+      RepositoryName: !Sub "mi-aplicacion-repo-${EnvironmentType}"
   # VPC creation
   MiAplicacionVPC:
     Type: AWS::EC2::VPC
@@ -28,29 +43,29 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: !Sub "MiAplicacionVPC-${EnvironmentType}"
-  # First public subnet us-east-1a
+          Value: !Sub "mi-aplicacionVPC-${EnvironmentType}"
+  # First public subnet us-east-2a
   MiAplicacionPublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref MiAplicacionVPC
-      AvailabilityZone: us-east-1a
+      AvailabilityZone: us-east-2a
       CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub "MiAplicacionPublicSubnet1-${EnvironmentType}"
-  # Second public subnet us-east-1b
+          Value: !Sub "mi-aplicacion-PublicSubnet1-${EnvironmentType}"
+  # Second public subnet us-east-2b
   MiAplicacionPublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref MiAplicacionVPC
-      AvailabilityZone: us-east-1b
+      AvailabilityZone: us-east-2b
       CidrBlock: 10.0.2.0/24
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub "MiAplicacionPublicSubnet2-${EnvironmentType}"
+          Value: !Sub "mi-aplicacion-PublicSubnet2-${EnvironmentType}"
   # EKS security group
   EKSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -61,15 +76,15 @@ Resources:
   MiAplicacionKSCluster:
     Type: AWS::EKS::Cluster
     Properties:
-      Name: !Sub "miaplicacion-cluster-${EnvironmentType}"
-      RoleArn: arn:aws:iam::123456789012:role/eksClusterRole
+      Name: !Sub "mi-aplicacion-cluster-${EnvironmentType}"
+      RoleArn: !GetAtt MiAplicacionEksClusterRole.Arn
       ResourcesVpcConfig:
         SubnetIds:
           - !Ref MiAplicacionPublicSubnet1
           - !Ref MiAplicacionPublicSubnet2
         SecurityGroupIds:
           - !Ref EKSSecurityGroup
-      Version: "1.21" # Check versions
+      Version: "1.27" # Check versions
 
 Outputs:
   RepositoryName:

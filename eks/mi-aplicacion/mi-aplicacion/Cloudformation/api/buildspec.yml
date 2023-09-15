@@ -1,23 +1,29 @@
 version: 0.2
 phases:
+  install:
+    runtime-versions:
+      kubectl: latest  # Install the latest version of kubectl
   pre-build:
     commands:
       - echo Logging in to Amazon ECR...
       - $(aws ecr get-login --no-include-email --region ${AWS::Region})
   build:
     commands:
-      - mkdir -p cloudformationPackage dockerImage
-      - aws cloudformation package --template-file mi-aplicacion/Cloudformation/api/template.yml --s3-bucket $S3Bucket --output-template-file packaged-template.yml
-     # - cp ./packaged-template.yml ./cloudformationPackage
+      - echo Showing folder structure
+      - ls -l
+      - aws cloudformation package --template-file eks/mi-aplicacion/mi-aplicacion/Cloudformation/api/pipeline.yml --s3-bucket $S3Bucket --output-template-file packaged-template.yml
       - echo Building Docker image...
-      - docker build -t miaplicacion -f Mi-Aplicacion/Dockerfile .
-      - docker tag miaplicacion:latest ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/miaplicacion-ecr-repo:latest
-     # - docker save -o miaplicacion.tar miaplicacion
-     # - cp ./miaplicacion.tar ./dockerImage
+      - docker build -t mi-aplicacion -f mi-aplicacion/Dockerfile .
+      - docker tag mi-aplicacion:latest ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/mi-aplicacion-repo-${ENVIRONMENT_TYPE}:latest
+      - docker save -o miaplicacion.tar miaplicacion
   post_build:
     commands:
       - echo Pushing Docker image to Amazon ECR...
-      - docker push ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/miaplicacion-ecr-repo:latest
+      - docker push ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/mi-aplicacion-repo-${ENVIRONMENT_TYPE}:latest
+      - echo Deploying image to Amazon EKS...
+      - kubectl apply -f eks/mi-aplicacion/mi-aplicacion/Kubernetes/${ENVIRONMENT_TYPE}/deployment.yaml
+      - echo Applying service to Amazon EKS...
+      - kubectl apply -f eks/mi-aplicacion/mi-aplicacion/Kubernetes/${ENVIRONMENT_TYPE}/service.yaml
 artifacts:
   files:
     - packaged-template.yml
