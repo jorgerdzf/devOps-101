@@ -9,23 +9,27 @@ phases:
     commands:
       - echo Logging in to Amazon ECR...
       - aws --version
-      - aws ecr get-login-password --region us-east-2 --no-include-email --debug
-      - REPOSITORY_URI=${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/mi-aplicacion-repo-${ENVIRONMENT_TYPE}:latest
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - IMAGE_REPO_NAME=mi-aplicacion-repo-${ENVIRONMENT_TYPE}
+      - IMAGE_TAG=latest
       - echo connecting to repository $REPOSITORY_URI
-      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-  build:
-    commands:
       - echo Showing folder structure
       - ls -l
+  build:
+    commands:
+      - echo packaging cloudformation template
       - aws cloudformation package --template-file eks/mi-aplicacion/mi-aplicacion/CloudFormation/api/pipeline.yml --s3-bucket $S3Bucket --output-template-file packaged-template.yml
-      - echo Building Docker image...
-      - docker build -t mi-aplicacion -f mi-aplicacion/mi-aplicacion/Dockerfile .
-      - docker tag mi-aplicacion:latest ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/mi-aplicacion-repo-${ENVIRONMENT_TYPE}:latest
-      - docker save -o miaplicacion.tar miaplicacion
+      - echo Build started on `date`
+      - echo Building the Docker image...  
+      - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG -f mi-aplicacion/mi-aplicacion/Dockerfile .
+      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
+      #- docker save -o miaplicacion.tar miaplicacion
   post_build:
     commands:
-      - echo Pushing Docker image to Amazon ECR...
-      - docker push $REPOSITORY_URI
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - docker push $REPOSITORY_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
       # - echo Deploying image to Amazon EKS...
       # - kubectl apply -f eks/mi-aplicacion/mi-aplicacion/Kubernetes/${ENVIRONMENT_TYPE}/deployment.yaml
       # - echo Applying service to Amazon EKS...
