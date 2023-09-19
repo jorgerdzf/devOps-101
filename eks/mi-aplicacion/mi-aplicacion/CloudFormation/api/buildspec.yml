@@ -7,23 +7,21 @@ phases:
   #     dotnet: latest
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR...
       - aws --version
+      - echo Logging in to Amazon ECR...
       - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - IMAGE_REPO_NAME=mi-aplicacion-repo-${ENVIRONMENT_TYPE}
       - IMAGE_TAG=latest
-      - printf "\n $REPOSITORY_URI \n $IMAGE_REPO_NAME \n $IMAGE_TAG"
-      - echo connecting to repository $REPOSITORY_URI
+      - printf "\n REPOSITORY_URI=$REPOSITORY_URI \n IMAGE_REPO_NAME=$IMAGE_REPO_NAME \n IMAGE_TAG=$IMAGE_TAG"
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - echo Showing folder structure
-      - ls -l
   build:
     commands:
       # - echo packaging cloudformation template
       # - aws cloudformation package --template-file eks/mi-aplicacion/mi-aplicacion/CloudFormation/api/pipeline.yml --s3-bucket $S3Bucket --output-template-file packaged-template.yml
       - echo Build started on `date`
       - echo Building the Docker image...  
-      - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG -f mi-aplicacion/mi-aplicacion/Dockerfile .
+      - cd eks/mi-aplicacion/mi-aplicacion
+      - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
       - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
       #- docker save -o miaplicacion.tar miaplicacion
   post_build:
