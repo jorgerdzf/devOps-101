@@ -40,7 +40,7 @@ create_cloudformation_stack () {
     --stack-name "${APPLICATION_NAME}-api-${ENVIRONMENT_TYPE}" \
     --template-body "${API_STACK_TEMPLATE}" \
     --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
-    --parameters ParameterKey="EnvironmentType",ParameterValue="${ENVIRONMENT_TYPE}" \
+    --parameters ParameterKey="ApplicationName",ParameterValue=${APPLICATION_NAME} ParameterKey="EnvironmentType",ParameterValue="${ENVIRONMENT_TYPE}" \
     --role-arn "$roleArn" \
     --change-set-name "${APPLICATION_NAME}-api-${ENVIRONMENT_TYPE}-changeset" \
     --change-set-type CREATE \

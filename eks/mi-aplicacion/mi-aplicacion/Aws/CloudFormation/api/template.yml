@@ -3,6 +3,9 @@ Transform: AWS::Serverless-2016-10-31
 Description: "ImmsExchange Template Format"
 
 Parameters:
+  ApplicationName:
+    Description: App name
+    Type: String
   EnvironmentType:
     Description: The environment type
     Type: String
@@ -17,7 +20,7 @@ Resources:
   MiAplicacionEksClusterRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "mi-aplicacion-eks-role-${EnvironmentType}"
+      RoleName: !Sub "${ApplicationName}-eks-role-${EnvironmentType}"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -33,7 +36,7 @@ Resources:
   MiAplicacionECRRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Sub "mi-aplicacion-repo-${EnvironmentType}"
+      RepositoryName: !Sub "${ApplicationName}-repo-${EnvironmentType}"
   # VPC creation
   MiAplicacionVPC:
     Type: AWS::EC2::VPC
@@ -43,7 +46,7 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: !Sub "mi-aplicacionVPC-${EnvironmentType}"
+          Value: !Sub "${ApplicationName}VPC-${EnvironmentType}"
   # First public subnet us-east-2a
   MiAplicacionPublicSubnet1:
     Type: AWS::EC2::Subnet
@@ -54,7 +57,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub "mi-aplicacion-PublicSubnet1-${EnvironmentType}"
+          Value: !Sub "${ApplicationName}-PublicSubnet1-${EnvironmentType}"
   # Second public subnet us-east-2b
   MiAplicacionPublicSubnet2:
     Type: AWS::EC2::Subnet
@@ -65,7 +68,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub "mi-aplicacion-PublicSubnet2-${EnvironmentType}"
+          Value: !Sub "${ApplicationName}-PublicSubnet2-${EnvironmentType}"
   # EKS security group
   EKSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -76,7 +79,7 @@ Resources:
   MiAplicacionKSCluster:
     Type: AWS::EKS::Cluster
     Properties:
-      Name: !Sub "mi-aplicacion-cluster-${EnvironmentType}"
+      Name: !Sub "${ApplicationName}-cluster-${EnvironmentType}"
       RoleArn: !GetAtt MiAplicacionEksClusterRole.Arn
       ResourcesVpcConfig:
         SubnetIds:

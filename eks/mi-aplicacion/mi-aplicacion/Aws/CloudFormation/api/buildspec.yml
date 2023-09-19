@@ -24,14 +24,14 @@ phases:
       
       - echo Logging into Amazon EKS...
       - aws eks --region $AWS_DEFAULT_REGION update-kubeconfig --name $AWS_CLUSTER_NAME
-      - EKS_ROLE_ARN=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${APPLICATION_NAME}-eks-role-${ENVIRONMENT_TYPE}
-      - echo roleARN=$EKS_ROLE_ARN
-      - echo Assuming role
-      - aws sts assume-role --role-arn $EKS_ROLE_ARN --role-session-name test
-      - echo check caller identity
-      - aws sts get-caller-identity
-      - echo Update config with cluster role
-      - aws eks --region $AWS_DEFAULT_REGION update-kubeconfig --name $AWS_CLUSTER_NAME #--role-arn $EKS_ROLE_ARN
+      #- EKS_ROLE_ARN=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${APPLICATION_NAME}-eks-role-${ENVIRONMENT_TYPE}
+      #- echo roleARN=$EKS_ROLE_ARN
+      #- echo Assuming role
+      #- aws sts assume-role --role-arn $EKS_ROLE_ARN --role-session-name test
+      #- echo check caller identity    
+      #- aws sts get-caller-identity
+      #- echo Update config with cluster role
+      #- aws eks --region $AWS_DEFAULT_REGION update-kubeconfig --name $AWS_CLUSTER_NAME #--role-arn $EKS_ROLE_ARN
       - echo check config 
       - kubectl config view --minify
       - echo check kubectl access

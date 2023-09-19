@@ -49,11 +49,15 @@ Resources:
           - Effect: Allow
             Principal:
               Service:
+                - "codepipeline.amazonaws.com"
                 - "codebuild.amazonaws.com"
+                - "codedeploy.amazonaws.com"
                 - "s3.amazonaws.com"
                 - "kms.amazonaws.com"
                 - "eks.amazonaws.com"
                 - "ecr.amazonaws.com"
+                - "ec2.amazonaws.com"
+                - "iam.amazonaws.com"
             Action:
               - "sts:AssumeRole"
       Path: /service-role/
@@ -77,7 +81,6 @@ Resources:
                   - "logs:PutLogEvents"
                   - "cloudformation:*"
                   - "kms:*"
-                  - "codedeploy:*"
                   - "ecr:BatchCheckLayerAvailability"
                   - "ecr:CompleteLayerUpload"
                   - "ecr:GetAuthorizationToken"
@@ -86,8 +89,14 @@ Resources:
                   - "ecr:UploadLayerPart"
                   - "eks:*"
                   - "s3:*"
+                  - "codepipeline:*"
+                  - "codebuild:*"
+                  - "codedeploy:*"
                 Resource:
                   - "*"
+              - Effect: Allow
+                Action: sts:AssumeRole
+                Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/${ApplicationName}-eks-role-${EnvironmentType}
   CodePipeLineRole:
     Type: AWS::IAM::Role
     Properties:
