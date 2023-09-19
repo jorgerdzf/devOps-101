@@ -208,7 +208,7 @@ Resources:
         Type: LINUX_CONTAINER
         Image: aws/codebuild/standard:5.0
         ImagePullCredentialsType: CODEBUILD
-        PrivilegedMode: false
+        PrivilegedMode: true
         EnvironmentVariables:
           - Name: S3Bucket
             Type: PLAINTEXT

@@ -1,10 +1,5 @@
 version: 0.2
 phases:
-  # install:
-  #   runtime-versions:
-  #     # kubectl: latest  # Install the latest version of kubectl
-  #     #docker: latest
-  #     dotnet: latest
   pre_build:
     commands:
       - aws --version
@@ -12,29 +7,17 @@ phases:
       - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - IMAGE_REPO_NAME=mi-aplicacion-repo-${ENVIRONMENT_TYPE}
       - IMAGE_TAG=latest
-      - printf "\n REPOSITORY_URI=$REPOSITORY_URI \n IMAGE_REPO_NAME=$IMAGE_REPO_NAME \n IMAGE_TAG=$IMAGE_TAG"
+      - printf "\n REPOSITORY_URI=$REPOSITORY_URI \n IMAGE_REPO_NAME=$IMAGE_REPO_NAME \n IMAGE_TAG=$IMAGE_TAG \n\n"
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
   build:
     commands:
-      # - echo packaging cloudformation template
-      # - aws cloudformation package --template-file eks/mi-aplicacion/mi-aplicacion/CloudFormation/api/pipeline.yml --s3-bucket $S3Bucket --output-template-file packaged-template.yml
       - echo Build started on `date`
       - echo Building the Docker image...  
-      - cd eks/mi-aplicacion/mi-aplicacion
-      - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
+      - cd eks/mi-aplicacion
+      - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG -f mi-aplicacion/Dockerfile .
       - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $REPOSITORY_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
-      #- docker save -o miaplicacion.tar miaplicacion
   post_build:
     commands:
       - echo Build completed on `date`
       - echo Pushing the Docker image...
       - docker push $REPOSITORY_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
-      # - echo Deploying image to Amazon EKS...
-      # - kubectl apply -f eks/mi-aplicacion/mi-aplicacion/Kubernetes/${ENVIRONMENT_TYPE}/deployment.yaml
-      # - echo Applying service to Amazon EKS...
-      # - kubectl apply -f eks/mi-aplicacion/mi-aplicacion/Kubernetes/${ENVIRONMENT_TYPE}/service.yaml
-artifacts:
-  files:
-    - packaged-template.yml
-    #- miaplicacion.tar
-    #- Dockerfile
