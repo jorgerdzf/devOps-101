@@ -15,15 +15,7 @@ phases:
       - aws --version
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR...
-      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - IMAGE_REPO_NAME=${APPLICATION_NAME}-repo-${ENVIRONMENT_TYPE}
-      - IMAGE_TAG=latest
-      - printf "\n REPOSITORY_URI=$REPOSITORY_URI \n IMAGE_REPO_NAME=$IMAGE_REPO_NAME \n IMAGE_TAG=$IMAGE_TAG \n\n"
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      
       - echo Logging into Amazon EKS...
-      
       - EKS_ROLE_ARN=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${APPLICATION_NAME}-eks-role-${ENVIRONMENT_TYPE}
       - echo roleARNtoAssume=$EKS_ROLE_ARN
       #- echo Assuming role
@@ -36,6 +28,14 @@ phases:
       - kubectl config view --minify
       - echo check kubectl access
       - kubectl get svc
+      - echo Logging in to Amazon ECR...
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - IMAGE_REPO_NAME=${APPLICATION_NAME}-repo-${ENVIRONMENT_TYPE}
+      - IMAGE_TAG=latest
+      - printf "\n REPOSITORY_URI=$REPOSITORY_URI \n IMAGE_REPO_NAME=$IMAGE_REPO_NAME \n IMAGE_TAG=$IMAGE_TAG \n\n"
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      
+      
   build:
     commands:
       - echo Build started on `date`
