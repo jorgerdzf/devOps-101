@@ -26,11 +26,17 @@ Parameters:
       - test
       - prod
     ConstraintDescription: must be a dev, test or prod
+  ApplicationName:
+    Description: Application name used to navigate throug the app file structure
+    Type: String
   S3Bucket:
     Description: S3 Bucket to store the artifacts generated during the pipeline
     Type: String
   CFRole:
     Description: Cloudformation role with permissions to create the required resources
+    Type: String
+  EKSClusterName:
+    Description: EKS cluster name created in cloudformation
     Type: String
 
 Resources:
@@ -216,9 +222,15 @@ Resources:
           - Name: ENVIRONMENT_TYPE
             Type: PLAINTEXT
             Value: !Ref EnvironmentType
+          - Name: APPLICATION_NAME
+            Type: PLAINTEXT
+            Value: !Ref ApplicationName
           - Name: AWS_ACCOUNT_ID
             Type: PLAINTEXT
             Value: !Ref AWS::AccountId
+          - Name: AWS_CLUSTER_NAME
+            Type: PLAINTEXT
+            Value: !Ref EKSClusterName
 
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline

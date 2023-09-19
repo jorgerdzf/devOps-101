@@ -49,6 +49,7 @@ PIPELINE_STACK_TEMPLATE="file://../pipeline/pipeline.yml" \
 PIPELINE_CONNECTION_ARN="arn:aws:codestar-connections:us-east-2:356403663115:connection/68c0ec37-5bfa-40cb-935a-9e731b1faa61" \
 REPOSITORY_ID="jorgerdzf/devOps-101" \
 REPOSITORY_BRANCH="main" \
-ENVIRONMENT_TYPE="test" \
+ENVIRONMENT_TYPE="test" \ 
+APPLICATION_NAME="mi-aplicacion" \
 ./create-cloudformation-stack.sh
 ```
