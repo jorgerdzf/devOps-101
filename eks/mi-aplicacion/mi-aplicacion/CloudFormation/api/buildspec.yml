@@ -1,14 +1,18 @@
 version: 0.2
 phases:
-  install:
-    runtime-versions:
-      # kubectl: latest  # Install the latest version of kubectl
-      #docker: latest
-      dotnet: latest
+  # install:
+  #   runtime-versions:
+  #     # kubectl: latest  # Install the latest version of kubectl
+  #     #docker: latest
+  #     dotnet: latest
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --no-include-email --region us-east-2
+      - aws --version
+      - aws ecr get-login --region us-east-2 --no-include-email
+      - REPOSITORY_URI=${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/mi-aplicacion-repo-${ENVIRONMENT_TYPE}:latest
+      - echo connecting to repository $REPOSITORY_URI
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
   build:
     commands:
       - echo Showing folder structure
@@ -21,7 +25,7 @@ phases:
   post_build:
     commands:
       - echo Pushing Docker image to Amazon ECR...
-      - docker push ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/mi-aplicacion-repo-${ENVIRONMENT_TYPE}:latest
+      - docker push $REPOSITORY_URI
       # - echo Deploying image to Amazon EKS...
       # - kubectl apply -f eks/mi-aplicacion/mi-aplicacion/Kubernetes/${ENVIRONMENT_TYPE}/deployment.yaml
       # - echo Applying service to Amazon EKS...
