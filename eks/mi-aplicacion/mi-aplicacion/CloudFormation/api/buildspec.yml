@@ -9,11 +9,12 @@ phases:
     commands:
       - echo Logging in to Amazon ECR...
       - aws --version
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - IMAGE_REPO_NAME=mi-aplicacion-repo-${ENVIRONMENT_TYPE}
       - IMAGE_TAG=latest
+      - printf "\n $REPOSITORY_URI \n $IMAGE_REPO_NAME \n $IMAGE_TAG"
       - echo connecting to repository $REPOSITORY_URI
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - echo Showing folder structure
       - ls -l
   build:
