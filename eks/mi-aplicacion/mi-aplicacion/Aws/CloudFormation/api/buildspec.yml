@@ -15,28 +15,32 @@ phases:
       - aws --version
   pre_build:
     commands:
+      # EKS PART
       - echo Logging into Amazon EKS...
       - aws sts get-caller-identity
+      - echo "Setting Environment Variables related to AWS CLI for Kube Config Setup"          
       - EKS_ROLE_ARN=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${APPLICATION_NAME}-eks-role-${ENVIRONMENT_TYPE}
-      - echo roleARNtoAssume=$EKS_ROLE_ARN
-      #- echo Assuming role
-      - aws sts assume-role --role-arn $EKS_ROLE_ARN --role-session-name codebuildEksDeploy
-      #- echo check caller identity    
-      
-      - aws eks --region $AWS_DEFAULT_REGION update-kubeconfig --name $AWS_CLUSTER_NAME --role-arn $EKS_ROLE_ARN
-      #- echo Update config with cluster role
+      # Extracting AWS Credential Information using STS Assume Role for kubectl
+      - echo "Setting Environment Variables related to AWS CLI for Kube Config Setup"          
+      - CREDENTIALS=$(aws sts assume-role --role-arn $EKS_ROLE_ARN --role-session-name codebuild-kubectl --duration-seconds 900)
+      - export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')"
+      - export AWS_SECRET_ACCESS_KEY="$(echo ${CREDENTIALS} | jq -r '.Credentials.SecretAccessKey')"
+      - export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
+      - export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
+      # Setup kubectl with our EKS Cluster              
+      - echo "Update Kube Config"      
+      - aws eks update-kubeconfig --name $AWS_CLUSTER_NAME
       - echo check config 
       - kubectl config view --minify
       - echo check kubectl access
       - kubectl get svc
+      # ECR PART
       - echo Logging in to Amazon ECR...
       - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - IMAGE_REPO_NAME=${APPLICATION_NAME}-repo-${ENVIRONMENT_TYPE}
       - IMAGE_TAG=latest
       - printf "\n REPOSITORY_URI=$REPOSITORY_URI \n IMAGE_REPO_NAME=$IMAGE_REPO_NAME \n IMAGE_TAG=$IMAGE_TAG \n\n"
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      
-      
   build:
     commands:
       - echo Build started on `date`
