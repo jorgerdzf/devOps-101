@@ -108,7 +108,7 @@ create_cloudformation_stack () {
   --stack-name "${APPLICATION_NAME}-pipeline-${ENVIRONMENT_TYPE}" \
   --template-body "${PIPELINE_STACK_TEMPLATE}" \
   --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
-  --parameters ParameterKey="EnvironmentType",ParameterValue="${ENVIRONMENT_TYPE}" ParameterKey="PipelineConnectionArn",ParameterValue="${PIPELINE_CONNECTION_ARN}" ParameterKey="RepositoryId",ParameterValue="${REPOSITORY_ID}" ParameterKey="RepositoryBranch",ParameterValue="${REPOSITORY_BRANCH}" ParameterKey="S3Bucket",ParameterValue="${APPLICATION_NAME}-${ENVIRONMENT_TYPE}-artifacts" ParameterKey="CFRole",ParameterValue="$roleArn" ParameterKey="EKSClusterName",ParameterValue="$cluster_name" \
+  --parameters ParameterKey="ApplicationName",ParameterValue=${APPLICATION_NAME} ParameterKey="EnvironmentType",ParameterValue="${ENVIRONMENT_TYPE}" ParameterKey="PipelineConnectionArn",ParameterValue="${PIPELINE_CONNECTION_ARN}" ParameterKey="RepositoryId",ParameterValue="${REPOSITORY_ID}" ParameterKey="RepositoryBranch",ParameterValue="${REPOSITORY_BRANCH}" ParameterKey="S3Bucket",ParameterValue="${APPLICATION_NAME}-${ENVIRONMENT_TYPE}-artifacts" ParameterKey="CFRole",ParameterValue="$roleArn" ParameterKey="EKSClusterName",ParameterValue="$cluster_name" \
   --role-arn "$roleArn" \
   --change-set-name "${APPLICATION_NAME}-pipeline-${ENVIRONMENT_TYPE}-changeset" \
   --change-set-type CREATE \

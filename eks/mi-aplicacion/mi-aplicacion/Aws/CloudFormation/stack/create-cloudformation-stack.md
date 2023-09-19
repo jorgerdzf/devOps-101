@@ -47,14 +47,14 @@ The following script is the one in charge to create the required resources, stac
 
 ```bash
 AWS_CLI_PROFILE="jorge" \
-ROLE_TRUST_POLICY_FILE="file://./Aws/Cloudformation/pipeline/policies/mi-aplicacion-cloudformation-trust-policy.json" \
-ROLE_POLICY_FILE="file://./Aws/Cloudformation/pipeline/policies/mi-aplicacion-cloudformation-policy.json" \
-API_STACK_TEMPLATE="file://./Aws/Cloudformation/api/template.yml" \
-PIPELINE_STACK_TEMPLATE="file://./Aws/Cloudformation/pipeline/pipeline.yml" \
+ROLE_TRUST_POLICY_FILE="file://./Aws/CloudFormation/pipeline/policies/cloudformation-trust-policy.json" \
+ROLE_POLICY_FILE="file://./Aws/CloudFormation/pipeline/policies/cloudformation-policy.json" \
+API_STACK_TEMPLATE="file://./Aws/CloudFormation/api/template.yml" \
+PIPELINE_STACK_TEMPLATE="file://./Aws/CloudFormation/pipeline/pipeline.yml" \
 PIPELINE_CONNECTION_ARN="arn:aws:codestar-connections:us-east-2:356403663115:connection/68c0ec37-5bfa-40cb-935a-9e731b1faa61" \
 REPOSITORY_ID="jorgerdzf/devOps-101" \
 REPOSITORY_BRANCH="main" \
-ENVIRONMENT_TYPE="test" \ 
+ENVIRONMENT_TYPE="test" \
 APPLICATION_NAME="mi-aplicacion" \
-./Aws/CloudFormation/create-cloudformation-stack.sh
+./Aws/CloudFormation/stack/create-cloudformation-stack.sh
 ```
