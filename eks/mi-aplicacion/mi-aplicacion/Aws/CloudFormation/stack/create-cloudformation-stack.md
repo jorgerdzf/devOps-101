@@ -12,6 +12,7 @@ Once the pipeline is working, the template.yml will be updated with the one that
 - Consider to run everything under a linux/wsl2 OS. 
 - Be sure to have aws cli profile configured (https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html)
 - Be sure to have jq utility locally installed
+- Be sure the buildspec file path is correct in the pipeline.yaml
 
 ## 1. Create a connection to the repository
 

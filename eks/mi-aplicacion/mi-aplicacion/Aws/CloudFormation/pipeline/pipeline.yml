@@ -208,7 +208,7 @@ Resources:
         EncryptionDisabled: true
       Source:
         Type: CODEPIPELINE
-        BuildSpec: "eks/mi-aplicacion/mi-aplicacion/CloudFormation/api/buildspec.yml"
+        BuildSpec: "eks/mi-aplicacion/mi-aplicacion/Aws/CloudFormation/api/buildspec.yml" #BE SURE TO CHANGE THIS PATH
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
