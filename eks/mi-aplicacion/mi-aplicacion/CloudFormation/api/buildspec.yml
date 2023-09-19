@@ -19,8 +19,8 @@ phases:
       - ls -l
   build:
     commands:
-      - echo packaging cloudformation template
-      - aws cloudformation package --template-file eks/mi-aplicacion/mi-aplicacion/CloudFormation/api/pipeline.yml --s3-bucket $S3Bucket --output-template-file packaged-template.yml
+      # - echo packaging cloudformation template
+      # - aws cloudformation package --template-file eks/mi-aplicacion/mi-aplicacion/CloudFormation/api/pipeline.yml --s3-bucket $S3Bucket --output-template-file packaged-template.yml
       - echo Build started on `date`
       - echo Building the Docker image...  
       - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG -f mi-aplicacion/mi-aplicacion/Dockerfile .

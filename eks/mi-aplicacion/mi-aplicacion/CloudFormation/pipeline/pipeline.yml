@@ -216,7 +216,10 @@ Resources:
           - Name: ENVIRONMENT_TYPE
             Type: PLAINTEXT
             Value: !Ref EnvironmentType
-  
+          - Name: AWS_ACCOUNT_ID
+            Type: PLAINTEXT
+            Value: !Ref AWS::AccountId
+
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
