@@ -9,7 +9,7 @@ phases:
     commands:
       - echo Logging in to Amazon ECR...
       - aws --version
-      - aws ecr get-login --region us-east-2 --no-include-email
+      - aws ecr get-login-password --region us-east-2 --no-include-email --debug
       - REPOSITORY_URI=${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/mi-aplicacion-repo-${ENVIRONMENT_TYPE}:latest
       - echo connecting to repository $REPOSITORY_URI
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
