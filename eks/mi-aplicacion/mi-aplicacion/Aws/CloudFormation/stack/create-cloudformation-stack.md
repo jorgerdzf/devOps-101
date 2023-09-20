@@ -47,6 +47,7 @@ The following script is the one in charge to create the required resources, stac
 ### Important
 - Grant executions privileges to the bash script.
 - Be sure to run this command under the application root folder.
+- If for some reason any changeset creation fail, check cloudformation events tab to see what's wrong, and if there's not anything at all just run again the full command.
 
 ## Development Environment Script
 

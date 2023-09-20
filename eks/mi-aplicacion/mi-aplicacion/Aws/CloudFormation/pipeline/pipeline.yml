@@ -95,7 +95,7 @@ Resources:
         EncryptionDisabled: true
       Source:
         Type: CODEPIPELINE
-        BuildSpec: !Sub "eks/${ApplicationName}/${ApplicationName}/Aws/CloudFormation/api/buildspec.yml" #BE SURE TO CHANGE THIS PATH
+        BuildSpec: !Sub "eks/mi-aplicacion/mi-aplicacion/Aws/CloudFormation/api/buildspec.yml" #BE SURE TO CHANGE THIS PATH SINCE MAPPED VALUES ARE NOT ALLOWED HERE
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
@@ -128,7 +128,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       Name: !Sub ${ApplicationName}-pipeline-${EnvironmentType}
-      RoleArn: !Ref CodePipeLineRoleArn
+      RoleArn: !Ref CodePipelineRoleArn
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineBucket

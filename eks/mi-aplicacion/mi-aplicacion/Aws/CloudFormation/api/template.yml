@@ -118,10 +118,11 @@ Resources:
                 - cloudformation.amazonaws.com
                 - codebuild.amazonaws.com
                 - iam.amazonaws.com
-                - servicecatalog.amazonaws.com
             Action: sts:AssumeRole
       ManagedPolicyArns:
       - arn:aws:iam::aws:policy/AdministratorAccess
+      - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+      - arn:aws:iam::aws:policy/AmazonEKSServicePolicy
   
   # STATIC RESOURCES SECTION
   # ECR repository
