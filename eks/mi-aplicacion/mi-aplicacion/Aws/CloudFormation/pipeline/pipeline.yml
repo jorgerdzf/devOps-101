@@ -38,9 +38,19 @@ Parameters:
   EKSClusterName:
     Description: EKS cluster name created in cloudformation
     Type: String
+  CodePipelineRoleArn:
+    Description: CodePipelineRole
+    Type: String
+  CodeBuildRoleArn:
+    Description: CodeBuildRole Arn
+    Type: String
+  EksClusterRoleArn:
+    Description: CodeDeployRole Arn
+    Type: String
 
 Resources:
-  CodeBuildRole:
+
+  EKSUpdateRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -49,151 +59,19 @@ Resources:
           - Effect: Allow
             Principal:
               Service:
-                - "codepipeline.amazonaws.com"
-                - "codebuild.amazonaws.com"
-                - "codedeploy.amazonaws.com"
-                - "s3.amazonaws.com"
-                - "kms.amazonaws.com"
                 - "eks.amazonaws.com"
-                - "ecr.amazonaws.com"
-                - "ec2.amazonaws.com"
-                - "iam.amazonaws.com"
             Action:
               - "sts:AssumeRole"
-      Path: /service-role/
       Policies:
-        - PolicyName: root
+        - PolicyName: !Sub ${EnvironmentType}-${ApplicationName}-eksupdate-policy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
-                  - "s3:*"
-                Resource: "*"
-              - Effect: Allow
-                Action:
-                  - "secretsmanager:GetSecretValue"
-                Resource: "arn:aws:secretsmanager:*:*:secret:build/*"
-              - Effect: Allow
-                Action:
-                  - "logs:CreateLogGroup"
-                  - "logs:CreateLogStream"
-                  - "logs:PutLogEvents"
-                  - "cloudformation:*"
-                  - "kms:*"
-                  - "ecr:BatchCheckLayerAvailability"
-                  - "ecr:CompleteLayerUpload"
-                  - "ecr:GetAuthorizationToken"
-                  - "ecr:InitiateLayerUpload"
-                  - "ecr:PutImage"
-                  - "ecr:UploadLayerPart"
-                  - "eks:*"
-                  - "s3:*"
-                  - "codepipeline:*"
-                  - "codebuild:*"
-                  - "codedeploy:*"
+                  - eks:UpdateClusterConfig
                 Resource:
-                  - "*"
-              - Effect: Allow
-                Action: sts:AssumeRole
-                Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/${ApplicationName}-eks-role-${EnvironmentType}
-  CodePipeLineRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - "codepipeline.amazonaws.com"
-                - "codebuild.amazonaws.com"
-                - "codedeploy.amazonaws.com"
-                - "cloudformation.amazonaws.com"
-                - "s3.amazonaws.com"
-                - "kms.amazonaws.com"
-                - "eks.amazonaws.com"
-                - "ecr.amazonaws.com"
-                - "ec2.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
-      Path: /
-      Policies:
-        - PolicyName: !Sub ${EnvironmentType}-miaplicacion-policy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "codestar-connections:*"
-                  - "codebuild:*"
-                  - "s3:*"
-                  - "cloudformation:*"
-                  - "cloudwatch:*"
-                  - "iam:PassRole"
-                  - "ecr:*"
-                  - "eks:*"
-                  - "ec2:*"
-                Resource:
-                  - "*"
-  CodeDeployRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: CodeDeployRole
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: codedeploy.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: CodeDeployPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - ec2:Describe*
-                  - autoscaling:CompleteLifecycleAction
-                  - autoscaling:DeleteLifecycleHook
-                  - autoscaling:Describe*
-                  - autoscaling:RecordLifecycleActionHeartbeat
-                  - s3:GetObject
-                  - s3:PutObject
-                  - s3:ListBucket
-                  - s3:GetBucketLocation
-                  - s3:GetObjectVersion
-                  - s3:GetObjectAcl
-                Resource: '*'
-              - Effect: Allow
-                Action:
-                  - ecs:RegisterTaskDefinition
-                  - ecs:DeregisterTaskDefinition
-                  - ecs:UpdateService
-                  - ecs:DescribeServices
-                  - ecs:ListServices
-                  - ecs:CreateService
-                  - ecs:DeleteService
-                Resource: '*'
-              - Effect: Allow
-                Action:
-                  - ecr:GetDownloadUrlForLayer
-                  - ecr:BatchCheckLayerAvailability
-                  - ecr:GetAuthorizationToken
-                  - ecr:GetRepositoryPolicy
-                  - ecr:DescribeRepositories
-                  - ecr:ListImages
-                  - ecr:DescribeImages
-                  - ecr:BatchGetImage
-                Resource: '*'
-              - Effect: Allow
-                Action:
-                  - codedeploy:CreateDeployment
-                  - codedeploy:Get* 
-                  - codedeploy:RegisterApplicationRevision
-                  - codedeploy:BatchGet*
-                Resource: '*'
+                  - !Sub "arn:aws:eks:${AWS::Region}:${AWS::AccountId}:cluster/${EKSClusterName}"
 
   PipelineBucket:
     Type: "AWS::S3::Bucket"
@@ -205,7 +83,7 @@ Resources:
     Type: AWS::CodeBuild::Project
     Properties:
       Name: !Sub ${AWS::StackName}-CodeBuild
-      ServiceRole: !GetAtt CodeBuildRole.Arn
+      ServiceRole: !Ref CodeBuildRoleArn
       LogsConfig:
         CloudWatchLogs:
           GroupName: !Sub ${AWS::StackName}-CodeBuildLogGroup
@@ -217,7 +95,7 @@ Resources:
         EncryptionDisabled: true
       Source:
         Type: CODEPIPELINE
-        BuildSpec: "eks/mi-aplicacion/mi-aplicacion/Aws/CloudFormation/api/buildspec.yml" #BE SURE TO CHANGE THIS PATH
+        BuildSpec: !Sub "eks/${ApplicationName}/${ApplicationName}/Aws/CloudFormation/api/buildspec.yml" #BE SURE TO CHANGE THIS PATH
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
         Type: LINUX_CONTAINER
@@ -240,12 +118,17 @@ Resources:
           - Name: AWS_CLUSTER_NAME
             Type: PLAINTEXT
             Value: !Ref EKSClusterName
+          - Name: EKS_ROLE
+            Type: PLAINTEXT
+            Value: !Ref EksClusterRoleArn
+          - Name: EKS_UPDATE_ROLE
+            Value: !GetAtt EKSUpdateRole.Arn
 
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      Name: !Sub mi-aplicacion-pipeline-${EnvironmentType}
-      RoleArn: !GetAtt CodePipeLineRole.Arn
+      Name: !Sub ${ApplicationName}-pipeline-${EnvironmentType}
+      RoleArn: !Ref CodePipeLineRoleArn
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineBucket

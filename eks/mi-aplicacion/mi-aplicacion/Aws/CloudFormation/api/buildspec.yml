@@ -18,11 +18,10 @@ phases:
       # EKS PART
       - echo Logging into Amazon EKS...
       - aws sts get-caller-identity
-      - echo "Setting Environment Variables related to AWS CLI for Kube Config Setup"          
-      - EKS_ROLE_ARN=arn:aws:iam::${AWS_ACCOUNT_ID}:role/${APPLICATION_NAME}-eks-role-${ENVIRONMENT_TYPE}
+      - echo "Setting Environment Variables related to AWS CLI for Kube Config Setup"
       # Extracting AWS Credential Information using STS Assume Role for kubectl
       - echo "Setting Environment Variables related to AWS CLI for Kube Config Setup"          
-      - CREDENTIALS=$(aws sts assume-role --role-arn $EKS_ROLE_ARN --role-session-name codebuild-kubectl --duration-seconds 900)
+      - CREDENTIALS=$(aws sts assume-role --role-arn ${EKS_ROLE} --role-session-name codebuild-kubectl --duration-seconds 900)
       - export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')"
       - export AWS_SECRET_ACCESS_KEY="$(echo ${CREDENTIALS} | jq -r '.Credentials.SecretAccessKey')"
       - export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
@@ -32,6 +31,13 @@ phases:
       - aws eks update-kubeconfig --name $AWS_CLUSTER_NAME
       - echo check config 
       - kubectl config view --minify
+      # Update auth map
+      - ROLE="    - rolearn: ${EKS_ROLE}\n      username: build\n      groups:\n        - system:masters"
+      - kubectl get -n kube-system configmap/aws-auth -o yaml | awk "/mapRoles: \|/{print;print \"${EKS_ROLE}\";next}1" > /tmp/aws-auth-patch.yml
+      - kubectl patch configmap/aws-auth -n kube-system --patch "$(cat /tmp/aws-auth-patch.yml)"
+      - echo check auth map config
+      - kubectl describe configmap/aws-auth -n kube-system
+      #
       - echo check kubectl access
       - kubectl get svc
       # ECR PART

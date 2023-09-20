@@ -92,23 +92,28 @@ create_cloudformation_stack () {
   aws cloudformation describe-stacks --stack-name "${APPLICATION_NAME}-api-${ENVIRONMENT_TYPE}" > stack_info.json
 
   # Extract output values into a json
-  repository_name=$(jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="RepositoryName").OutputValue' stack_info.json)
-  cluster_name=$(jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="ClusterName").OutputValue' stack_info.json)
+  REPOSITORY_NAME=$(jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="RepositoryName").OutputValue' stack_info.json)
+  CLUSTER_NAME=$(jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="ClusterName").OutputValue' stack_info.json)
+  CODEPIPELINE_ARN=$(jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="CodePipelineRoleArn").OutputValue' stack_info.json)
+  CODEBUILD_ARN=$(jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="CodeBuildRoleArn").OutputValue' stack_info.json)
+  EKS_ARN=$(jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="EksClusterRoleArn").OutputValue' stack_info.json)
 
-  printf "\n Cloudformation Temple Output parameters: \n ECR Repository name: ${repository_name} \n EKS Cluster name: ${cluster_name}"
+  printf "\n Cloudformation Temple Output parameters: \n ECR Repository name: ${REPOSITORY_NAME} \n EKS Cluster name: ${CLUSTER_NAME}"
   # Remove temp json
   rm stack_info.json
 
   #PIPELINE STACK CREATION
   printf "\n\n Creating the cloudformation pipeline stack and change set \n"
-
-  printf "\n Pipeline Parameters: \n ApplicationName=${APPLICATION_NAME} \n EnvironmentType=${ENVIRONMENT_TYPE} \n PipelineConnectionArn=${PIPELINE_CONNECTION_ARN} \n RepositoryID=${REPOSITORY_ID} \n RepositoryBranch=${REPOSITORY_BRANCH} \n CFRole=${roleArn} \n EKSClusterName=${cluster_name} \n"
+  printf "\n Pipeline Parameters: \n ApplicationName=${APPLICATION_NAME} \n EnvironmentType=${ENVIRONMENT_TYPE} \n"
+  printf "PipelineConnectionArn=${PIPELINE_CONNECTION_ARN} \n RepositoryID=${REPOSITORY_ID} \n"
+  printf "RepositoryBranch=${REPOSITORY_BRANCH} \n CFRole=${roleArn} \n EKSClusterName=${CLUSTER_NAME} \n"
+  printf "CodeBuildRoleArn=${CODEBUILD_ARN} \n CodePipelineRoleArn=${CODEPIPELINE_ARN} \n EksRoleArn=${EKS_ARN} \n"
 
   pipelineChangeSetId=$(aws --profile="${AWS_CLI_PROFILE}" cloudformation create-change-set \
   --stack-name "${APPLICATION_NAME}-pipeline-${ENVIRONMENT_TYPE}" \
   --template-body "${PIPELINE_STACK_TEMPLATE}" \
   --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
-  --parameters ParameterKey="ApplicationName",ParameterValue=${APPLICATION_NAME} ParameterKey="EnvironmentType",ParameterValue="${ENVIRONMENT_TYPE}" ParameterKey="PipelineConnectionArn",ParameterValue="${PIPELINE_CONNECTION_ARN}" ParameterKey="RepositoryId",ParameterValue="${REPOSITORY_ID}" ParameterKey="RepositoryBranch",ParameterValue="${REPOSITORY_BRANCH}" ParameterKey="S3Bucket",ParameterValue="${APPLICATION_NAME}-${ENVIRONMENT_TYPE}-artifacts" ParameterKey="CFRole",ParameterValue="$roleArn" ParameterKey="EKSClusterName",ParameterValue="$cluster_name" \
+  --parameters ParameterKey="ApplicationName",ParameterValue=${APPLICATION_NAME} ParameterKey="EnvironmentType",ParameterValue="${ENVIRONMENT_TYPE}" ParameterKey="PipelineConnectionArn",ParameterValue="${PIPELINE_CONNECTION_ARN}" ParameterKey="RepositoryId",ParameterValue="${REPOSITORY_ID}" ParameterKey="RepositoryBranch",ParameterValue="${REPOSITORY_BRANCH}" ParameterKey="S3Bucket",ParameterValue="${APPLICATION_NAME}-${ENVIRONMENT_TYPE}-artifacts" ParameterKey="CFRole",ParameterValue="$roleArn" ParameterKey="EKSClusterName",ParameterValue="$CLUSTER_NAME" ParameterKey="CodePipelineRoleArn",ParameterValue="$CODEPIPELINE_ARN" ParameterKey="CodeBuildRoleArn",ParameterValue="$CODEBUILD_ARN" ParameterKey="EksClusterRoleArn",ParameterValue="$EKS_ARN"\
   --role-arn "$roleArn" \
   --change-set-name "${APPLICATION_NAME}-pipeline-${ENVIRONMENT_TYPE}-changeset" \
   --change-set-type CREATE \

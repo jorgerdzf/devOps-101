@@ -17,7 +17,93 @@ Parameters:
     ConstraintDescription: must be a dev, test or prod
 
 Resources:
-  MiAplicacionEksClusterRole:
+  # IAM ROLES SECTION
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "codepipeline.amazonaws.com"
+                - "codebuild.amazonaws.com"
+                - "codedeploy.amazonaws.com"
+                - "s3.amazonaws.com"
+                - "kms.amazonaws.com"
+                - "eks.amazonaws.com"
+                - "ecr.amazonaws.com"
+                - "ec2.amazonaws.com"
+                - "iam.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: !Sub ${EnvironmentType}-${ApplicationName}-codebuild-policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:*"
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - "secretsmanager:GetSecretValue"
+                Resource: "arn:aws:secretsmanager:*:*:secret:build/*"
+              - Effect: Allow
+                Action:
+                  - "logs:*"
+                  - "cloudformation:*"
+                  - "kms:*"
+                  - "ecr:*"
+                  - "ec2:*"
+                  - "eks:*"
+                  - "s3:*"
+                  - "codepipeline:*"
+                  - "codebuild:*"
+                  - "codedeploy:*"
+                Resource:
+                  - "*"
+  CodePipeLineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "codepipeline.amazonaws.com"
+                - "codebuild.amazonaws.com"
+                - "codedeploy.amazonaws.com"
+                - "cloudformation.amazonaws.com"
+                - "s3.amazonaws.com"
+                - "kms.amazonaws.com"
+                - "eks.amazonaws.com"
+                - "ecr.amazonaws.com"
+                - "ec2.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: !Sub ${EnvironmentType}-${ApplicationName}-codepipeline-policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "codestar-connections:*"
+                  - "codebuild:*"
+                  - "s3:*"
+                  - "cloudformation:*"
+                  - "cloudwatch:*"
+                  - "iam:PassRole"
+                  - "ecr:*"
+                  - "eks:*"
+                  - "ec2:*"
+                Resource:
+                  - "*"
+  EksClusterRole:
     Type: AWS::IAM::Role
     Properties:
       RoleName: !Sub "${ApplicationName}-eks-role-${EnvironmentType}"
@@ -26,19 +112,25 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service: eks.amazonaws.com
+              AWS: !GetAtt CodeBuildRole.Arn
+              Service: 
+                - eks.amazonaws.com
+                - cloudformation.amazonaws.com
+                - codebuild.amazonaws.com
+                - iam.amazonaws.com
+                - servicecatalog.amazonaws.com
             Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
-        - arn:aws:iam::aws:policy/AmazonEKSServicePolicy
-
-  # ECR reposi
-  MiAplicacionECRRepository:
+      - arn:aws:iam::aws:policy/AdministratorAccess
+  
+  # STATIC RESOURCES SECTION
+  # ECR repository
+  ECRRepository:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: !Sub "${ApplicationName}-repo-${EnvironmentType}"
-  # VPC creation
-  MiAplicacionVPC:
+  # VPC creation for EKS cluster
+  VPC:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: 10.0.0.0/16
@@ -48,10 +140,10 @@ Resources:
         - Key: Name
           Value: !Sub "${ApplicationName}VPC-${EnvironmentType}"
   # First public subnet us-east-2a
-  MiAplicacionPublicSubnet1:
+  PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref MiAplicacionVPC
+      VpcId: !Ref VPC
       AvailabilityZone: us-east-2a
       CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: true
@@ -59,10 +151,10 @@ Resources:
         - Key: Name
           Value: !Sub "${ApplicationName}-PublicSubnet1-${EnvironmentType}"
   # Second public subnet us-east-2b
-  MiAplicacionPublicSubnet2:
+  PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref MiAplicacionVPC
+      VpcId: !Ref VPC
       AvailabilityZone: us-east-2b
       CidrBlock: 10.0.2.0/24
       MapPublicIpOnLaunch: true
@@ -74,17 +166,17 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security group for EKS cluster
-      VpcId: !Ref MiAplicacionVPC
+      VpcId: !Ref VPC
   # EKS Cluster
-  MiAplicacionKSCluster:
+  EKSCluster:
     Type: AWS::EKS::Cluster
     Properties:
       Name: !Sub "${ApplicationName}-cluster-${EnvironmentType}"
-      RoleArn: !GetAtt MiAplicacionEksClusterRole.Arn
+      RoleArn: !GetAtt EksClusterRole.Arn
       ResourcesVpcConfig:
         SubnetIds:
-          - !Ref MiAplicacionPublicSubnet1
-          - !Ref MiAplicacionPublicSubnet2
+          - !Ref PublicSubnet1
+          - !Ref PublicSubnet2
         SecurityGroupIds:
           - !Ref EKSSecurityGroup
       Version: "1.27" # Check versions
@@ -92,7 +184,16 @@ Resources:
 Outputs:
   RepositoryName:
     Description: Name of the ECR Repo
-    Value: !Ref MiAplicacionECRRepository
+    Value: !Ref ECRRepository
   ClusterName:
     Description: Name of the EKS Cluster
-    Value: !Ref MiAplicacionKSCluster
+    Value: !Ref EKSCluster
+  CodePipelineRoleArn:
+    Description: CodePipelineRole
+    Value: !GetAtt CodePipeLineRole.Arn
+  CodeBuildRoleArn:
+    Description: CodeBuildRole Arn
+    Value: !GetAtt CodeBuildRole.Arn
+  EksClusterRoleArn:
+    Description: CodeDeployRole Arn
+    Value: !GetAtt EksClusterRole.Arn
