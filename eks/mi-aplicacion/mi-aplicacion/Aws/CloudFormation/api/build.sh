@@ -8,34 +8,35 @@ build_and_deploy () {
     mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin
     echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
     source ~/.bashrc
-    printf '\n Check kubectl & aws version:'
+    printf '\n Check kubectl & aws version: \n\n'
     kubectl version --short --client
     aws --version
 
 # PRE-BUILD
 # EKS PART
-    printf "\n\n Logging into Amazon EKS..."
+    printf "\n\n Logging into Amazon EKS...\n"
     echo "Caller identity:"
     aws sts get-caller-identity
 
-    printf "Assuming eks role"
-    aws sts assume-role --role-arn ${EKS_ROLE} --role-session-name codebuild-kubectl
+    # printf "Assuming eks role \n"
+    # aws sts assume-role --role-arn ${EKS_ROLE} --role-session-name codebuild-kubectl
     
-    printf "\n Check caller identity again"
-    aws sts get-caller-identity
-
     #echo "Extracting AWS Credential Information using STS Assume Role for kubectl"
-    #printf "\n\n Setting Environment Variables related to AWS CLI for Kube Config Setup"          
-    # CREDENTIALS=$(aws sts assume-role --role-arn ${EKS_ROLE} --role-session-name codebuild-kubectl --duration-seconds 900)
-    # export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')"
-    # export AWS_SECRET_ACCESS_KEY="$(echo ${CREDENTIALS} | jq -r '.Credentials.SecretAccessKey')"
-    # export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
-    # export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
+    printf "\n\n Setting Environment Variables related to AWS CLI for Kube Config Setup \n"          
+    CREDENTIALS=$(aws sts assume-role --role-arn ${EKS_ROLE} --role-session-name codebuild-kubectl --duration-seconds 900)
+    export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')"
+    export AWS_SECRET_ACCESS_KEY="$(echo ${CREDENTIALS} | jq -r '.Credentials.SecretAccessKey')"
+    export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
+    export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
     
     # Setup kubectl with our EKS Cluster              
-    printf "\n Update Kube Config"      
+    printf "\n\n Update Kube Config \n"      
     aws eks update-kubeconfig --name $AWS_CLUSTER_NAME
-    printf "\n Check config:"
+
+    printf "\n Check caller identity again \n"
+    aws sts get-caller-identity
+    
+    printf "\n\n Check config: \n"
     kubectl config view --minify
 
     printf "\n\n Updating config map"
