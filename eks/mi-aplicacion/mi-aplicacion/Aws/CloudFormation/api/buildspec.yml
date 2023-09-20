@@ -31,9 +31,10 @@ phases:
       - aws eks update-kubeconfig --name $AWS_CLUSTER_NAME
       - echo check config 
       - kubectl config view --minify
-      - ROLE="- rolearn: ${EKS_ROLE}\n username: build\n groups:\n - system:masters"
-      - kubectl get -n kube-system configmap/aws-auth -o yaml | awk "/mapRoles: \|/{print;print \"${EKS_ROLE}\";next}1" > /tmp/aws-auth-patch.yml
-      - kubectl patch configmap/aws-auth -n kube-system --patch "$(cat /tmp/aws-auth-patch.yml)"
+      #- ROLE="  - rolearn:${EKS_ROLE} \n username:build \n groups:\n - system:masters"
+      #- kubectl get -n kube-system configmap/aws-auth -o yaml | awk "/mapRoles: \|/{print;print \"${ROLE}\";next}1" > /tmp/aws-auth-patch.yml
+      #- kubectl patch configmap/aws-auth -n kube-system --patch "$(cat /tmp/aws-auth-patch.yml)"
+      - kubectl patch configmap/aws-auth -n kube-system --type merge -p '{"data":{"mapRoles":"- rolearn: ${EKS_ROLE}\n  username: build\n  groups:\n    - system:masters"}}'
       - echo check auth map config
       - kubectl describe configmap/aws-auth -n kube-system
       #
