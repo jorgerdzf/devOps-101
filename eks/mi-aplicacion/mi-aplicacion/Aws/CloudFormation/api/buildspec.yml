@@ -4,5 +4,6 @@ env:
 phases:
   build:
     commands:
-      - chmod +x build.sh
-      - ./build.sh
+      - ls -l
+      - chmod +x ./eks/mi-aplicacion/mi-aplicacion/Aws/Cloudformation/api/build.sh
+      - ./eks/mi-aplicacion/mi-aplicacion/Aws/Cloudformation/api/build.sh
