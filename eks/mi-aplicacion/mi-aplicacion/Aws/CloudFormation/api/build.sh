@@ -31,7 +31,7 @@ install () {
     
     # Setup kubectl with our EKS Cluster              
     printf "\n\nUpdate Kube Config \n"      
-    aws eks update-kubeconfig --name $AWS_CLUSTER_NAME
+    aws eks update-kubeconfig --name $AWS_CLUSTER_NAME --role-arn $EKS_ROLE
 
     printf "\nCheck caller identity again \n"
     aws sts get-caller-identity
