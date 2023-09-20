@@ -23,7 +23,7 @@ install () {
     
     #echo "Extracting AWS Credential Information using STS Assume Role for kubectl"
     printf "\n\n Setting Environment Variables related to AWS CLI for Kube Config Setup \n"          
-    CREDENTIALS=$(aws sts assume-role --role-arn ${EKS_ROLE})
+    CREDENTIALS=$(aws sts assume-role --role-arn ${EKS_ROLE} --role-session-name codebuild-kubectl)
     export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')"
     export AWS_SECRET_ACCESS_KEY="$(echo ${CREDENTIALS} | jq -r '.Credentials.SecretAccessKey')"
     export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
