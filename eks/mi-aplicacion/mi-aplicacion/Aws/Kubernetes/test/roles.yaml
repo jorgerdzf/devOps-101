@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-auth
+  namespace: kube-system
+data:
+  mapRoles: |
+    - rolearn: arn:aws:iam::356403663115:role/mi-aplicacion-eks-role-test
+      username: build
+      groups:
+        - system:masters
