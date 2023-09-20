@@ -2,39 +2,47 @@
 
 build_and_deploy () {
 # INSTALL PHASE
-    echo $(ls -l)
-    echo Installing app dependencies...
+    printf "Installing app dependencies... \n\n"
     curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.18.9/2020-11-02/bin/linux/amd64/kubectl   
     chmod +x ./kubectl
     mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin
     echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
     source ~/.bashrc
-    echo 'Check kubectl version'
+    printf '\n Check kubectl & aws version:'
     kubectl version --short --client
     aws --version
 
 # PRE-BUILD
 # EKS PART
-    echo Logging into Amazon EKS...
+    printf "\n\n Logging into Amazon EKS..."
+    echo "Caller identity:"
     aws sts get-caller-identity
-    echo "Setting Environment Variables related to AWS CLI for Kube Config Setup"
 
-    # Extracting AWS Credential Information using STS Assume Role for kubectl
-    echo "Setting Environment Variables related to AWS CLI for Kube Config Setup"          
-    CREDENTIALS=$(aws sts assume-role --role-arn ${EKS_ROLE} --role-session-name codebuild-kubectl --duration-seconds 900)
-    export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')"
-    export AWS_SECRET_ACCESS_KEY="$(echo ${CREDENTIALS} | jq -r '.Credentials.SecretAccessKey')"
-    export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
-    export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
+    printf "Assuming eks role"
+    aws sts assume-role --role-arn ${EKS_ROLE} --role-session-name codebuild-kubectl
+    
+    printf "\n Check caller identity again"
+    aws sts get-caller-identity
+
+    #echo "Extracting AWS Credential Information using STS Assume Role for kubectl"
+    #printf "\n\n Setting Environment Variables related to AWS CLI for Kube Config Setup"          
+    # CREDENTIALS=$(aws sts assume-role --role-arn ${EKS_ROLE} --role-session-name codebuild-kubectl --duration-seconds 900)
+    # export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')"
+    # export AWS_SECRET_ACCESS_KEY="$(echo ${CREDENTIALS} | jq -r '.Credentials.SecretAccessKey')"
+    # export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
+    # export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
     
     # Setup kubectl with our EKS Cluster              
-    echo "Update Kube Config"      
+    printf "\n Update Kube Config"      
     aws eks update-kubeconfig --name $AWS_CLUSTER_NAME
-    echo check config 
+    printf "\n Check config:"
     kubectl config view --minify
+
+    printf "\n\n Updating config map"
     ROLE="    - rolearn: ${EKS_ROLE}\n      username: build\n      groups:\n        - system:masters"
     kubectl get -n kube-system configmap/aws-auth -o yaml | awk "/mapRoles: \|/{print;print \"${ROLE}\";next}1" > /tmp/aws-auth-patch.yml
     kubectl patch configmap/aws-auth -n kube-system --patch "$(cat /tmp/aws-auth-patch.yml)"
+    
     #- echo "- rolearn: $RoleArnParameter\n  username: <USERNAME>\n  groups:\n   system:masters" > add-role.yaml && kubectl apply -f add-role.yaml
     echo check auth map config
     kubectl describe configmap/aws-auth -n kube-system
