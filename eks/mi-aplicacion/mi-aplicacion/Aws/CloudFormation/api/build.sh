@@ -43,19 +43,21 @@ install () {
     printf "\n\nCheck config: \n"
     kubectl config view --minify
     kubectl config get-contexts
-    
+
+    printf "\n\nCheck auth map config \n"
+    kubectl describe configmap/aws-auth -n kube-system
+    printf "\n\nUpdating config map"
+    ROLE="    - rolearn: ${EKS_ROLE}\n      username: build\n      groups:\n        - system:masters"
+    kubectl get -n kube-system configmap/aws-auth -o yaml | awk "/mapRoles: \|/{print;print \"${ROLE}\";next}1" > /tmp/aws-auth-patch.yml
+    kubectl patch configmap/aws-auth -n kube-system --patch "$(cat /tmp/aws-auth-patch.yml)"
+
     # Check access
     printf "\n\nCheck kubectl access \n"
     
     kubectl get svc
 
     if [ $? -eq 0 ]; then
-        printf "\n\nCheck auth map config \n"
-        kubectl describe configmap/aws-auth -n kube-system
-        printf "\n\nUpdating config map"
-        ROLE="    - rolearn: ${EKS_ROLE}\n      username: build\n      groups:\n        - system:masters"
-        kubectl get -n kube-system configmap/aws-auth -o yaml | awk "/mapRoles: \|/{print;print \"${ROLE}\";next}1" > /tmp/aws-auth-patch.yml
-        kubectl patch configmap/aws-auth -n kube-system --patch "$(cat /tmp/aws-auth-patch.yml)"
+        
         build
     else
         printf "\n\n ERROR WHILE LOGIN \n\n"
