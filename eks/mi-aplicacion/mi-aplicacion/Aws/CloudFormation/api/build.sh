@@ -19,26 +19,25 @@ install () {
     aws sts get-caller-identity
 
     # printf "Assuming eks role \n"
-    # aws sts assume-role --role-arn ${EKS_ROLE} --role-session-name codebuild-kubectl
+    #aws sts assume-role --role-arn $EKS_ROLE --role-session-name test
     
     #echo "Extracting AWS Credential Information using STS Assume Role for kubectl"
     # printf "\n\n Setting Environment Variables related to AWS CLI for Kube Config Setup \n"          
-    # CREDENTIALS=$(aws sts assume-role --role-arn ${EKS_ROLE} --role-session-name codebuild-kubectl)
-    # export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')"
-    # export AWS_SECRET_ACCESS_KEY="$(echo ${CREDENTIALS} | jq -r '.Credentials.SecretAccessKey')"
-    # export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
-    # export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
+    CREDENTIALS=$(aws sts assume-role --role-arn ${EKS_ROLE} --role-session-name codebuild-kubectl)
+    export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')"
+    export AWS_SECRET_ACCESS_KEY="$(echo ${CREDENTIALS} | jq -r '.Credentials.SecretAccessKey')"
+    export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
+    export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
     
-    
+    printf "\nCheck caller identity again \n"
+    aws sts get-caller-identity
 
     # Setup kubectl with our EKS Cluster              
     printf "\n\nUpdate Kube Config \n"      
     # aws eks update-kubeconfig --name $AWS_CLUSTER_NAME --role-arn $EKS_ROLE
-    aws eks --region $AWS_DEFAULT_REGION update-kubeconfig --name $AWS_CLUSTER_NAME --role-arn $EKS_ROLE
+    aws eks --region $AWS_DEFAULT_REGION update-kubeconfig --name $AWS_CLUSTER_NAME #--role-arn $EKS_ROLE
 
-    printf "\nCheck caller identity again \n"
-    aws sts get-caller-identity
-
+    
     printf "\n\nCheck config: \n"
     kubectl config view --minify
 
