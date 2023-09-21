@@ -1,12 +1,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: mi-aplicacion-svc
+  name: mi-aplicacion-service
 spec:
   type: LoadBalancer
   selector:
     app: mi-aplicacion
   ports:
-    - port: 80
+    - protocol: TCP
+      port: 80
       targetPort: 80
+  
   

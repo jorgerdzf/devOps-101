@@ -93,10 +93,23 @@ build () {
     fi
 }
 deploy () {
-    # DEPLOY PHASE
+    # ECR DEPLOYMENT PHASE
     printf "\n\n BUILD COMPLETED ON `date` \n"
     printf "\n\n PUSHING DOCKER IMAGE TO ECR... `date` \n"
     docker push $REPOSITORY_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
+
+    # EKS DEPLOYMENT PHASE
+
+    # First we create a config map to map the necessary variables
+    echo "Applying config map:"
+    IMAGEURI=$REPOSITORY_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
+    
+    kubectl create configmap config-mappings \
+    --from-literal=imageUri=$IMAGEURI \
+    --dry-run=client -o yaml > configmap.yaml
+
+    kubectl apply -f configmap.yaml
+
     printf "\n\n PUSHING IMAGE TO EKS... `date` \n"
     kubectl apply -f ${APPLICATION_NAME}/Aws/Kubernetes/${ENVIRONMENT_TYPE}/deployment.yaml
     kubectl apply -f ${APPLICATION_NAME}/Aws/Kubernetes/${ENVIRONMENT_TYPE}/service.yaml
