@@ -8,7 +8,8 @@ install () {
     mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin
     echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
     source ~/.bashrc
-    printf '\nCheck kubectl & aws version: \n\n'
+    printf '\nCheck eksctl, kubectl & aws version: \n\n'
+    eksctl version --client
     kubectl version --short --client
     aws --version
 
@@ -46,12 +47,29 @@ install () {
     kubectl config view --minify
     kubectl config get-contexts
 
+    printf "\n\nCheck iam identity mapping: \n"
+    eksctl get iamidentitymapping --cluster $AWS_CLUSTER_NAME --region=$AWS_DEFAULT_REGION
+
+    printf "\n\Create config map: \n"
+    eksctl create iamidentitymapping --cluster $AWS_CLUSTER_NAME --region=$AWS_DEFAULT_REGION \
+    --arn $EKS_ROLE --username admin --group system:masters \
+    --no-duplicate-arns
+
+    if [ $? -eq 0 ]; then   
+        
+        build
+    else
+        printf "\n\n ERROR CREATING IDENTITY MAPPING \n\n"
+        exit 1
+    fi
+
     printf "\n\nCheck auth map config \n"
     kubectl describe configmap/aws-auth -n kube-system
     printf "\n\nUpdating config map"
-    ROLE="    - rolearn: ${EKS_ROLE}\n      username: build\n      groups:\n        - system:masters"
-    kubectl get -n kube-system configmap/aws-auth -o yaml | awk "/mapRoles: \|/{print;print \"${ROLE}\";next}1" > /tmp/aws-auth-patch.yml
-    kubectl patch configmap/aws-auth -n kube-system --patch "$(cat /tmp/aws-auth-patch.yml)"
+    
+    # ROLE="    - rolearn: ${EKS_ROLE}\n      username: build\n      groups:\n        - system:masters"
+    # kubectl get -n kube-system configmap/aws-auth -o yaml | awk "/mapRoles: \|/{print;print \"${ROLE}\";next}1" > /tmp/aws-auth-patch.yml
+    # kubectl patch configmap/aws-auth -n kube-system --patch "$(cat /tmp/aws-auth-patch.yml)"
 
     # Check access
     printf "\n\nCheck kubectl access \n"
@@ -59,7 +77,6 @@ install () {
     kubectl get svc
 
     if [ $? -eq 0 ]; then
-        
         build
     else
         printf "\n\n ERROR WHILE LOGIN \n\n"
@@ -99,6 +116,8 @@ deploy () {
     kubectl apply -f ${APPLICATION_NAME}/Aws/Kubernetes/${ENVIRONMENT_TYPE}/service.yaml
     kubectl rollout restart -f ${APPLICATION_NAME}/Aws/Kubernetes/${ENVIRONMENT_TYPE}/deployment.yaml
     kubectl get svc --all-namespaces
+    kubectl get nodes
+    kubectl cluster-info
 }
 main(){
   install
