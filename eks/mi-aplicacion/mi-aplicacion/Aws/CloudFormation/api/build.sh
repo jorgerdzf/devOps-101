@@ -31,15 +31,16 @@ install () {
     export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
     export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
     
-    # printf "\nCheck caller identity again \n"
-    # aws sts get-caller-identity
+   
 
     # Setup kubectl with our EKS Cluster              
     printf "\n\nUpdate Kube Config \n"      
     # aws eks update-kubeconfig --name $AWS_CLUSTER_NAME --role-arn $EKS_ROLE
-    aws eks --region $AWS_DEFAULT_REGION update-kubeconfig --name $AWS_CLUSTER_NAME --role-arn $CLOUDFORMATION_ROLE
+    aws eks --region $AWS_DEFAULT_REGION update-kubeconfig --name $AWS_CLUSTER_NAME #--role-arn $CLOUDFORMATION_ROLE
 
-    export KUBECONFIG=$HOME/.kube/config
+    #export KUBECONFIG=$HOME/.kube/config
+    printf "\nCheck caller identity again \n"
+    aws sts get-caller-identity
 
     printf "\n\nCheck config: \n"
     kubectl config view --minify
