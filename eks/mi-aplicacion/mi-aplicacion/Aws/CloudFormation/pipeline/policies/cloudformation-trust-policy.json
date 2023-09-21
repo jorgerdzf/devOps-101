@@ -24,6 +24,13 @@
   {
     "Effect": "Allow",
     "Principal": {
+      "Service": "codedeploy.amazonaws.com"
+    },
+    "Action": "sts:AssumeRole"
+  },
+  {
+    "Effect": "Allow",
+    "Principal": {
       "Service": "codepipeline.amazonaws.com"
     },
     "Action": "sts:AssumeRole"

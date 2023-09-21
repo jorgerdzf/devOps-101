@@ -38,40 +38,17 @@ Parameters:
   EKSClusterName:
     Description: EKS cluster name created in cloudformation
     Type: String
-  CodePipelineRoleArn:
-    Description: CodePipelineRole
-    Type: String
-  CodeBuildRoleArn:
-    Description: CodeBuildRole Arn
-    Type: String
+  # CodePipelineRoleArn:
+  #   Description: CodePipelineRole
+  #   Type: String
+  # CodeBuildRoleArn:
+  #   Description: CodeBuildRole Arn
+  #   Type: String
   EksClusterRoleArn:
     Description: CodeDeployRole Arn
     Type: String
 
 Resources:
-
-  EKSUpdateRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - "eks.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
-      Policies:
-        - PolicyName: !Sub ${EnvironmentType}-${ApplicationName}-eksupdate-policy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - eks:UpdateClusterConfig
-                Resource:
-                  - !Sub "arn:aws:eks:${AWS::Region}:${AWS::AccountId}:cluster/${EKSClusterName}"
 
   PipelineBucket:
     Type: "AWS::S3::Bucket"
@@ -83,7 +60,7 @@ Resources:
     Type: AWS::CodeBuild::Project
     Properties:
       Name: !Sub ${AWS::StackName}-CodeBuild
-      ServiceRole: !Ref CodeBuildRoleArn
+      ServiceRole: !Ref CFRole
       LogsConfig:
         CloudWatchLogs:
           GroupName: !Sub ${AWS::StackName}-CodeBuildLogGroup
@@ -121,14 +98,14 @@ Resources:
           - Name: EKS_ROLE
             Type: PLAINTEXT
             Value: !Ref EksClusterRoleArn
-          - Name: EKS_UPDATE_ROLE
-            Value: !GetAtt EKSUpdateRole.Arn
+          - Name: CLOUDFORMATION_ROLE
+            Value: !Ref CFRole
 
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       Name: !Sub ${ApplicationName}-pipeline-${EnvironmentType}
-      RoleArn: !Ref CodePipelineRoleArn
+      RoleArn: !Ref CFRole
       ArtifactStore:
         Type: S3
         Location: !Ref PipelineBucket

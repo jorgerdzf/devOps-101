@@ -18,91 +18,91 @@ Parameters:
 
 Resources:
   # IAM ROLES SECTION
-  CodeBuildRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - "codepipeline.amazonaws.com"
-                - "codebuild.amazonaws.com"
-                - "codedeploy.amazonaws.com"
-                - "s3.amazonaws.com"
-                - "kms.amazonaws.com"
-                - "eks.amazonaws.com"
-                - "ecr.amazonaws.com"
-                - "ec2.amazonaws.com"
-                - "iam.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
-      Policies:
-        - PolicyName: !Sub ${EnvironmentType}-${ApplicationName}-codebuild-policy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "s3:*"
-                Resource: "*"
-              - Effect: Allow
-                Action:
-                  - "secretsmanager:GetSecretValue"
-                Resource: "arn:aws:secretsmanager:*:*:secret:build/*"
-              - Effect: Allow
-                Action:
-                  - "logs:*"
-                  - "cloudformation:*"
-                  - "kms:*"
-                  - "ecr:*"
-                  - "ec2:*"
-                  - "eks:*"
-                  - "s3:*"
-                  - "codepipeline:*"
-                  - "codebuild:*"
-                  - "codedeploy:*"
-                Resource:
-                  - "*"
-  CodePipeLineRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - "codepipeline.amazonaws.com"
-                - "codebuild.amazonaws.com"
-                - "codedeploy.amazonaws.com"
-                - "cloudformation.amazonaws.com"
-                - "s3.amazonaws.com"
-                - "kms.amazonaws.com"
-                - "eks.amazonaws.com"
-                - "ecr.amazonaws.com"
-                - "ec2.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
-      Policies:
-        - PolicyName: !Sub ${EnvironmentType}-${ApplicationName}-codepipeline-policy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "codestar-connections:*"
-                  - "codebuild:*"
-                  - "s3:*"
-                  - "cloudformation:*"
-                  - "cloudwatch:*"
-                  - "iam:PassRole"
-                  - "ecr:*"
-                  - "eks:*"
-                  - "ec2:*"
-                Resource:
-                  - "*"
+  # CodeBuildRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Version: "2012-10-17"
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             Service:
+  #               - "codepipeline.amazonaws.com"
+  #               - "codebuild.amazonaws.com"
+  #               - "codedeploy.amazonaws.com"
+  #               - "s3.amazonaws.com"
+  #               - "kms.amazonaws.com"
+  #               - "eks.amazonaws.com"
+  #               - "ecr.amazonaws.com"
+  #               - "ec2.amazonaws.com"
+  #               - "iam.amazonaws.com"
+  #           Action:
+  #             - "sts:AssumeRole"
+  #     Policies:
+  #       - PolicyName: !Sub ${EnvironmentType}-${ApplicationName}-codebuild-policy
+  #         PolicyDocument:
+  #           Version: "2012-10-17"
+  #           Statement:
+  #             - Effect: Allow
+  #               Action:
+  #                 - "s3:*"
+  #               Resource: "*"
+  #             - Effect: Allow
+  #               Action:
+  #                 - "secretsmanager:GetSecretValue"
+  #               Resource: "arn:aws:secretsmanager:*:*:secret:build/*"
+  #             - Effect: Allow
+  #               Action:
+  #                 - "logs:*"
+  #                 - "cloudformation:*"
+  #                 - "kms:*"
+  #                 - "ecr:*"
+  #                 - "ec2:*"
+  #                 - "eks:*"
+  #                 - "s3:*"
+  #                 - "codepipeline:*"
+  #                 - "codebuild:*"
+  #                 - "codedeploy:*"
+  #               Resource:
+  #                 - "*"
+  # CodePipeLineRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Version: "2012-10-17"
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             Service:
+  #               - "codepipeline.amazonaws.com"
+  #               - "codebuild.amazonaws.com"
+  #               - "codedeploy.amazonaws.com"
+  #               - "cloudformation.amazonaws.com"
+  #               - "s3.amazonaws.com"
+  #               - "kms.amazonaws.com"
+  #               - "eks.amazonaws.com"
+  #               - "ecr.amazonaws.com"
+  #               - "ec2.amazonaws.com"
+  #           Action:
+  #             - "sts:AssumeRole"
+  #     Policies:
+  #       - PolicyName: !Sub ${EnvironmentType}-${ApplicationName}-codepipeline-policy
+  #         PolicyDocument:
+  #           Version: "2012-10-17"
+  #           Statement:
+  #             - Effect: Allow
+  #               Action:
+  #                 - "codestar-connections:*"
+  #                 - "codebuild:*"
+  #                 - "s3:*"
+  #                 - "cloudformation:*"
+  #                 - "cloudwatch:*"
+  #                 - "iam:PassRole"
+  #                 - "ecr:*"
+  #                 - "eks:*"
+  #                 - "ec2:*"
+  #               Resource:
+  #                 - "*"
   EksClusterRole:
     Type: AWS::IAM::Role
     Properties:
@@ -189,12 +189,12 @@ Outputs:
   ClusterName:
     Description: Name of the EKS Cluster
     Value: !Ref EKSCluster
-  CodePipelineRoleArn:
-    Description: CodePipelineRole
-    Value: !GetAtt CodePipeLineRole.Arn
-  CodeBuildRoleArn:
-    Description: CodeBuildRole Arn
-    Value: !GetAtt CodeBuildRole.Arn
+  # CodePipelineRoleArn:
+  #   Description: CodePipelineRole
+  #   Value: !GetAtt CodePipeLineRole.Arn
+  # CodeBuildRoleArn:
+  #   Description: CodeBuildRole Arn
+  #   Value: !GetAtt CodeBuildRole.Arn
   EksClusterRoleArn:
     Description: CodeDeployRole Arn
     Value: !GetAtt EksClusterRole.Arn
