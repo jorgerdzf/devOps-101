@@ -3,6 +3,14 @@
   "Statement": [
     {
       "Action": [
+        "lambda:InvokeFunction",
+        "lambda:ListFunctions"
+      ],
+      "Resource": "*",
+      "Effect": "Allow"
+    },
+    {
+      "Action": [
         "iam:PassRole"
       ],
       "Resource": "*",
@@ -14,6 +22,8 @@
         "s3:*",
         "cloudformation:*",
         "cloudwatch:*",
+        "dynamodb:*",
+        "lambda:*",
         "kms:*",
         "ecr:*",
         "ec2:*",
@@ -21,10 +31,11 @@
         "codebuild:*",
         "codepipeline:*",
         "codedeploy:*",
-        "codestar-connections:PassConnection",
+        "codestar-connections:*",
         "sts:*",
         "iam:*",
         "ssm:*",
+        "sns:*",
         "xray:*"
       ],
       "Resource": "*",

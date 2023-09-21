@@ -38,12 +38,6 @@ Parameters:
   EKSClusterName:
     Description: EKS cluster name created in cloudformation
     Type: String
-  # CodePipelineRoleArn:
-  #   Description: CodePipelineRole
-  #   Type: String
-  # CodeBuildRoleArn:
-  #   Description: CodeBuildRole Arn
-  #   Type: String
   EksClusterRoleArn:
     Description: CodeDeployRole Arn
     Type: String
@@ -104,7 +98,7 @@ Resources:
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      Name: !Sub ${ApplicationName}-pipeline-${EnvironmentType}
+      Name: !Sub ${ApplicationName}-${EnvironmentType}-pipeline
       RoleArn: !Ref CFRole
       ArtifactStore:
         Type: S3
