@@ -23,7 +23,7 @@ spec:
                   name: config-mappings
                   key: imageUri
           name: mi-aplicacion
-          image: $(IMAGE_URI)
+          image: IMAGE_URI
           imagePullPolicy: Always
           ports:
             - containerPort: 3300
