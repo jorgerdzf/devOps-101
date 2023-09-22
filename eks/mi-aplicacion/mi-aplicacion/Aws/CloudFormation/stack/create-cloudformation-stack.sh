@@ -1,7 +1,7 @@
 #!/bin/bash
 
 create_cloudformation_stack () {
-  printf "\nCreating the needed cloudformation role... \n\n"
+  printf "\nChecking if there is an existing IAM ROLE for this stack configuration...\n"
   CLOUDFORMATION_ROLE_NAME="${APPLICATION_NAME}-${ENVIRONMENT_TYPE}-cloudformation-role"
   CLOUDFORMATION_ROLE_DESCRIPTION=$(aws iam get-role --role-name "$CLOUDFORMATION_ROLE_NAME" 2>&1)
   
@@ -10,9 +10,9 @@ create_cloudformation_stack () {
   ########################
   if [ $? -eq 0 ]; then
     CLOUDFORMATION_ROLE_ARN=$(echo "$CLOUDFORMATION_ROLE_DESCRIPTION" | jq -r '.Role.Arn')
-    printf "Role $CLOUDFORMATION_ROLE_NAME exists with arn: $CLOUDFORMATION_ROLE_ARN \n"
+    printf "Role $CLOUDFORMATION_ROLE_NAME exists with arn: $CLOUDFORMATION_ROLE_ARN \n\n"
   else
-    printf "Role $CLOUDFORMATION_ROLE_NAME does not exist, proceed to add it. \n"
+    printf "Role $CLOUDFORMATION_ROLE_NAME does not exist, proceed to CREATE IAM ROLE... \n"
     CLOUDFORMATION_ROLE_ARN=$(aws --profile="${AWS_CLI_PROFILE}" iam create-role --role-name $CLOUDFORMATION_ROLE_NAME --assume-role-policy-document "${ROLE_TRUST_POLICY_FILE}" --output text --query 'Role.Arn')
     echo "The generated $CLOUDFORMATION_ROLE_NAME role arn is: $CLOUDFORMATION_ROLE_ARN"
     
@@ -38,11 +38,11 @@ create_cloudformation_stack () {
   # BEGIN CLOUDFORMATION SECTION
   ########################
   CLOUDFORMATION_STACK_NAME=${APPLICATION_NAME}-${ENVIRONMENT_TYPE}-app
-  #CHECK IF STACK IS ALREADY EXISTENT
+  #CHECK IF STACK ALREADY EXISTS
   CLOUDFORMATION_STACK_DESCRIPTION=$(aws cloudformation describe-stacks --stack-name "${CLOUDFORMATION_STACK_NAME}" 2>&1)
   
   if [ $? -eq 0 ]; then
-    printf "\n \n Stack ${CLOUDFORMATION_STACK_NAME} has already been created. \n"
+    printf "\n\nStack ${CLOUDFORMATION_STACK_NAME} has already been created. Proceed to check EKS cluster.\n\n"
   else
     #CLOUDFORMATION STACK CREATION
     echo "Creating the cloudformation stack and change set"
@@ -76,7 +76,7 @@ create_cloudformation_stack () {
       exit 1;
     fi
 
-    printf "Cloudformation ${CLOUDFORMATION_STACK_NAME} stack created with the id $stackId. Proceed to execute changeset...\n\n"
+    printf "Cloudformation ${CLOUDFORMATION_STACK_NAME} stack created with the id \n $stackId. Proceed to execute changeset...\n\n"
 
     #CLOUDFORMATION STACK EXECUTION
     aws cloudformation execute-change-set --stack-name "${CLOUDFORMATION_STACK_NAME}" \
@@ -87,6 +87,7 @@ create_cloudformation_stack () {
       stack_status=$(aws cloudformation describe-stacks --stack-name "${CLOUDFORMATION_STACK_NAME}" \
         --query "Stacks[0].StackStatus" --output text)
       if [ "$stack_status" == "CREATE_COMPLETE" ] || [ "$stack_status" == "UPDATE_COMPLETE" ]; then
+        echo "Cloudformation stack execution is complete.\n\n"
         break
       elif [ "$stack_status" == "ROLLBACK_COMPLETE" ]; then
         echo "Cloudformation stack execution has failed."
@@ -116,7 +117,7 @@ create_cloudformation_stack () {
   CLUSTER_STACK_DESCRIPTION=$(aws cloudformation describe-stacks --stack-name "eksctl-${CLUSTER_NAME}-cluster" 2>&1)
   
   if [ $? -eq 0 ]; then
-    printf "\n\nCluster Stack ${CLUSTER_NAME} has already been created. \n"
+    printf "\n\nCluster Stack ${CLUSTER_NAME} has already been created. \n\n"
   else
     eksctl create cluster --name ${CLUSTER_NAME} --region ${REGION} --nodes=3 --node-type=m5.large
     if [ $? -eq 0 ]; then
@@ -131,21 +132,21 @@ create_cloudformation_stack () {
   printf "\n\nCheck iam identity mapping: \n"
   eksctl get iamidentitymapping --cluster $CLUSTER_NAME --region=$REGION
 
-  printf "\n\Add identity mappings for CF role: \n"
+  printf "\n\nAdd identity mappings for CF role: \n"
   eksctl create iamidentitymapping --cluster $CLUSTER_NAME --region=$REGION \
   --arn $EKS_ARN --username eksAdmin --group system:masters \
   --no-duplicate-arns
-  printf "\n\Add identity mappings for EKS role: \n"
+  printf "\n\nAdd identity mappings for EKS role: \n"
   eksctl create iamidentitymapping --cluster $CLUSTER_NAME --region=$REGION \
   --arn $CLOUDFORMATION_ROLE_ARN --username eksAdmin --group system:masters \
   --no-duplicate-arns
 
   # Check config maps
-  printf "\n\nCheck auth map config \n"
+  printf "\n\nCheck auth map config: \n"
   kubectl describe configmap/aws-auth -n kube-system
 
   # Check access
-  printf "\n\nCheck kubectl access \n"
+  printf "\n\nCheck kubectl access: \n"
   kubectl get svc
 
   printf "\n\nCheck config: \n"
@@ -173,7 +174,7 @@ create_cloudformation_stack () {
   rm stack_info.json
 
   #PIPELINE STACK CREATION
-  printf "\n\n Creating the cloudformation pipeline stack and change set:"
+  printf "\n\n Creating the cloudformation pipeline stack and change set:\n"
   PIPELINE_NAME=${APPLICATION_NAME}-${ENVIRONMENT_TYPE}-pipeline
   
   pipelineChangeSetId=$(aws --profile="${AWS_CLI_PROFILE}" cloudformation create-change-set \
@@ -197,7 +198,7 @@ create_cloudformation_stack () {
       printf "\n\n Pipeline change set creation failed."
       exit 1
     else
-      printf "\n\n Waiting for pipeline change set to be created"
+      printf "\nWaiting for pipeline change set to be created"
       sleep 5
     fi
   done
@@ -207,10 +208,10 @@ create_cloudformation_stack () {
     exit 1;
   fi
 
-  printf "\n Cloudformation ${PIPELINE_NAME} stack created with the changeSet $pipelineChangeSetId"
+  printf "\nCloudformation ${PIPELINE_NAME} stack created with the changeSet id: \n $pipelineChangeSetId\n"
 
   #PIPELINE STACK EXECUTION
-  printf "Executing the change set of the ${PIPELINE_NAME} stack"
+  printf "\nExecuting the change set of the ${PIPELINE_NAME} stack \n"
 
   aws --profile="${AWS_CLI_PROFILE}" cloudformation execute-change-set --change-set-name "$pipelineChangeSetId"
 

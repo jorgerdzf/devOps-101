@@ -41,7 +41,7 @@ install () {
     if [ $? -eq 0 ]; then   
         build
     else
-        printf "\n\n ERROR ACCESING CLUSTER \n\n"
+        printf "\n\nERROR ACCESING CLUSTER\n\n"
         exit 1
     fi
 }
@@ -64,45 +64,35 @@ build () {
     if [ $? -eq 0 ]; then
         deploy
     else
-        echo "Error while building app"
+        echo "ERROR WHILE BUILDING APP"
         exit 1
     fi
 }
 deploy () {
     # ECR DEPLOYMENT PHASE
-    printf "\n\n BUILD COMPLETED ON `date` \n"
-    printf "\n\n PUSHING DOCKER IMAGE TO ECR... `date` \n"
+    printf "\n\nBUILD COMPLETED ON `date` \n"
+    printf "\n\nPUSHING DOCKER IMAGE TO ECR... `date` \n"
     docker push $REPOSITORY_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
-
+    printf "\n\DOCKER IMAGE UPLOADED ON `date` \n"
+    
     # EKS DEPLOYMENT PHASE
-
-    # First we create a config map to map the necessary variables
-    echo "Applying config map:"
-    IMAGEURI=$REPOSITORY_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
+    IMAGEURI=$REPOSITORY_URI/$IMAGE_REPO_NAME:$IMAGE_TAG #THIS NAME SHOULD MATCH WITH THE ONE IN DEPLOYMENT.YML
     echo "Image to pull: $IMAGEURI"
-
-    # sed -i 's/IMAGEURI/'"$IMAGEURI"'/g' ./${APPLICATION_NAME}/Aws/Kubernetes/${ENVIRONMENT_TYPE}/deployment.yaml
-
-    # kubectl create configmap config-mappings \
-    # --from-literal=imageUri=$IMAGEURI \
-    # --dry-run=client -o yaml > configmap.yaml
-
-    # kubectl apply -f configmap.yaml
-    # echo "Check config map"
-    # kubectl describe configmaps config-mappings
-
-    # cat ./${APPLICATION_NAME}/Aws/Kubernetes/${ENVIRONMENT_TYPE}/deployment.yaml
 
     printf "\n\n PUSHING IMAGE TO EKS... `date` \n"
     kubectl apply -f ${APPLICATION_NAME}/Aws/Kubernetes/${ENVIRONMENT_TYPE}/deployment.yaml
     kubectl apply -f ${APPLICATION_NAME}/Aws/Kubernetes/${ENVIRONMENT_TYPE}/service.yaml
     kubectl rollout restart -f ${APPLICATION_NAME}/Aws/Kubernetes/${ENVIRONMENT_TYPE}/deployment.yaml
 
-    printf "\n\n CHECK CLUSTER COINFIGS `date` \n"
+    printf "\n\nCHECK ALL CLUSTER SERVICES STATUS:\n"
     kubectl get svc --all-namespaces
+    printf "\n\nCHECK CURRENT CLUSTER SERVICES STATUS:\n"
     kubectl get services
+    printf "\n\nCHECK CURRENT DEPLOYMENT STATUS:\n"
     kubectl get deployments -o wide
+    printf "\n\nCHECK CLUSTER NODES:\n"
     kubectl get nodes
+    printf "\n\CLUSTER INFO:\n"
     kubectl cluster-info
 }
 main(){
