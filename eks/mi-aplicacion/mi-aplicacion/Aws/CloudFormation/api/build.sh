@@ -49,7 +49,7 @@ build () {
     # ECR PART
     echo Logging in to Amazon ECR...
     REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-    IMAGE_REPO_NAME=${APPLICATION_NAME}-repo-${ENVIRONMENT_TYPE}
+    IMAGE_REPO_NAME=${APPLICATION_NAME}-${ENVIRONMENT_TYPE}-repo
     IMAGE_TAG=latest
     printf "\n REPOSITORY_URI=$REPOSITORY_URI \n IMAGE_REPO_NAME=$IMAGE_REPO_NAME \n IMAGE_TAG=$IMAGE_TAG \n\n"
     aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
