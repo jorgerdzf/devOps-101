@@ -15,15 +15,17 @@ spec:
         app: mi-aplicacion-test
     spec:
       containers:
-        - name: mi-aplicacion
-          image: $(IMAGE_URI)
-          imagePullPolicy: Always
-          ports:
-            - containerPort: 3300
-              protocol: TCP
+        - args:
           env:
             - name: IMAGE_URI
               valueFrom:
                 configMapKeyRef:
                   name: config-mappings
                   key: imageUri
+          name: mi-aplicacion
+          image: $(IMAGE_URI)
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3300
+              protocol: TCP
+          
