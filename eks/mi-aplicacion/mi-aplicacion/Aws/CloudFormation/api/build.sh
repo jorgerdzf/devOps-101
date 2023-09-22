@@ -81,7 +81,7 @@ deploy () {
     IMAGEURI=$REPOSITORY_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
     echo "Image to pull: $IMAGEURI"
 
-    sed -i 's/IMAGEURI/'"$IMAGEURI"'/g' ./${APPLICATION_NAME}/Aws/Kubernetes/${ENVIRONMENT_TYPE}/deployment.yaml
+    # sed -i 's/IMAGEURI/'"$IMAGEURI"'/g' ./${APPLICATION_NAME}/Aws/Kubernetes/${ENVIRONMENT_TYPE}/deployment.yaml
 
     # kubectl create configmap config-mappings \
     # --from-literal=imageUri=$IMAGEURI \
@@ -91,7 +91,7 @@ deploy () {
     # echo "Check config map"
     # kubectl describe configmaps config-mappings
 
-    cat ./${APPLICATION_NAME}/Aws/Kubernetes/${ENVIRONMENT_TYPE}/deployment.yaml
+    # cat ./${APPLICATION_NAME}/Aws/Kubernetes/${ENVIRONMENT_TYPE}/deployment.yaml
 
     printf "\n\n PUSHING IMAGE TO EKS... `date` \n"
     kubectl apply -f ${APPLICATION_NAME}/Aws/Kubernetes/${ENVIRONMENT_TYPE}/deployment.yaml

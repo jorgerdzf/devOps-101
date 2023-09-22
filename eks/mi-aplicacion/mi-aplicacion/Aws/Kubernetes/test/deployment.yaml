@@ -23,7 +23,7 @@ spec:
                   name: config-mappings
                   key: imageUri
           name: mi-aplicacion
-          image: IMAGEURI
+          image: 356403663115.dkr.ecr.us-east-2.amazonaws.com/mi-aplicacion-test-repo:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 3300
