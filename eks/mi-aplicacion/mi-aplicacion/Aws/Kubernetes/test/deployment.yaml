@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: eks-mi-aplicacion-deployment
-  namespace: eks-mi-aplicacion
+  name: mi-aplicacion-test-deployment
+  namespace: mi-aplicacion-test
   labels:
-    app: eks-mi-aplicacion
+    app: mi-aplicacion-test
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: eks-mi-aplicacion
+      app: mi-aplicacion-test
   template:
     metadata:
       labels:
-        app: eks-mi-aplicacion
+        app: mi-aplicacion-test
     spec:
       containers:
         - name: mi-aplicacion
