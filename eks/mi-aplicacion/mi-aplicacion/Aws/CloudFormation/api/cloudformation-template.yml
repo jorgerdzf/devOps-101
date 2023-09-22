@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: "ImmsExchange Template Format"
+
+Parameters:
+  ApplicationName:
+    Description: App name
+    Type: String
+  
+  EnvironmentType:
+    Description: The environment type
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - test
+      - prod
+    ConstraintDescription: must be a dev, test or prod
+
+Resources:
+  EksRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      RoleName: !Sub "${ApplicationName}-${EnvironmentType}-cluster-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - eks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+        - "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+        - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+        - "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+  
+  ECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "${ApplicationName}-${EnvironmentType}-repo"
+
+Outputs:
+  RepositoryName:
+    Description: Name of the ECR Repo
+    Value: !Ref ECRRepository
+  EksClusterRoleArn:
+    Description: CodeDeployRole Arn
+    Value: !GetAtt EksRole.Arn

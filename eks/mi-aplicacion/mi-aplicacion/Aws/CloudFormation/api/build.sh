@@ -19,23 +19,9 @@ install () {
     echo "CALLER IDENTITY:"
     aws sts get-caller-identity
 
-    #printf "\n\nASSUMING CLOUDFORMATION ROLE: \n"
-    #echo "Extracting AWS Credential Information using STS Assume Role for kubectl"
-    # printf "\n\n Setting Environment Variables related to AWS CLI for Kube Config Setup \n"          
-    # CREDENTIALS=$(aws sts assume-role --role-arn ${$CLOUDFORMATION_ROLE} --role-session-name codebuild-kubectl)
-    # export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')"
-    # export AWS_SECRET_ACCESS_KEY="$(echo ${CREDENTIALS} | jq -r '.Credentials.SecretAccessKey')"
-    # export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
-    # export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
-    
     # Setup kubectl with our EKS Cluster              
-    printf "\n\nUpdate Kube Config \n"      
-    # aws eks update-kubeconfig --name $AWS_CLUSTER_NAME --role-arn $CLOUDFORMATION_ROLE
-    aws eks --region $AWS_DEFAULT_REGION update-kubeconfig --name $AWS_CLUSTER_NAME #--role-arn $CLOUDFORMATION_ROLE
-
-    #export KUBECONFIG=$HOME/.kube/config
-    printf "\nCheck caller identity again \n"
-    aws sts get-caller-identity
+    printf "\n\nUpdate Kube Config \n"
+    aws eks --region $AWS_DEFAULT_REGION update-kubeconfig --name $AWS_CLUSTER_NAME 
 
     printf "\n\nCheck config: \n"
     kubectl config view --minify
@@ -44,28 +30,18 @@ install () {
     printf "\n\nCheck iam identity mapping: \n"
     eksctl get iamidentitymapping --cluster $AWS_CLUSTER_NAME --region=$AWS_DEFAULT_REGION
 
-    printf "\n\Add identity mappings: \n"
-    eksctl create iamidentitymapping --cluster $AWS_CLUSTER_NAME --region=$AWS_DEFAULT_REGION \
-    --arn $EKS_ROLE --username admin --group system:masters \
-    --no-duplicate-arns
+    # Check config maps
+    printf "\n\nCheck auth map config \n"
+    kubectl describe configmap/aws-auth -n kube-system
+    
+    # Check access
+    printf "\n\nCheck kubectl access \n"
+    kubectl get svc
 
     if [ $? -eq 0 ]; then   
-        # Check config maps
-        printf "\n\nCheck auth map config \n"
-        kubectl describe configmap/aws-auth -n kube-system
-
-        # Check access
-        printf "\n\nCheck kubectl access \n"
-        kubectl get svc
-
-        if [ $? -eq 0 ]; then
-            build
-        else
-            printf "\n\n ERROR WHILE LOGIN \n\n"
-            exit 1
-        fi
+        build
     else
-        printf "\n\n ERROR CREATING IDENTITY MAPPING \n\n"
+        printf "\n\n ERROR ACCESING CLUSTER \n\n"
         exit 1
     fi
 }

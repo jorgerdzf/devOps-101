@@ -1,23 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mi-aplicacion-deployment
+  name: eks-mi-aplicacion-deployment
+  namespace: eks-mi-aplicacion
+  labels:
+    app: eks-mi-aplicacion
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: mi-aplicacion
+      app: eks-mi-aplicacion
   template:
     metadata:
       labels:
-        app: mi-aplicacion
+        app: eks-mi-aplicacion
     spec:
       containers:
         - name: mi-aplicacion
           image: $(IMAGE_URI)
           imagePullPolicy: Always
           ports:
-            - containerPort: 4500
+            - containerPort: 3300
               protocol: TCP
           env:
             - name: IMAGE_URI
