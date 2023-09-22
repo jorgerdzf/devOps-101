@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mi-aplicacion-test-deployment
-  namespace: mi-aplicacion-test
   labels:
     app: mi-aplicacion-test
 spec:
