@@ -79,12 +79,15 @@ deploy () {
     # First we create a config map to map the necessary variables
     echo "Applying config map:"
     IMAGEURI=$REPOSITORY_URI/$IMAGE_REPO_NAME:$IMAGE_TAG
-    
+    echo "Image to pull: $IMAGEURI"
+
     kubectl create configmap config-mappings \
     --from-literal=imageUri=$IMAGEURI \
     --dry-run=client -o yaml > configmap.yaml
 
     kubectl apply -f configmap.yaml
+    echo "Check config map"
+    kubectl describe configmaps config-mappings
 
     printf "\n\n PUSHING IMAGE TO EKS... `date` \n"
     kubectl apply -f ${APPLICATION_NAME}/Aws/Kubernetes/${ENVIRONMENT_TYPE}/deployment.yaml
@@ -94,7 +97,7 @@ deploy () {
     printf "\n\n CHECK CLUSTER COINFIGS `date` \n"
     kubectl get svc --all-namespaces
     kubectl get services
-    kubectl get deployments
+    kubectl get deployments -o wide
     kubectl get nodes
     kubectl cluster-info
 }
